@@ -1,0 +1,53 @@
+# Coastal Law Ltd — integrity engine client configuration
+# Paths are relative to this file's directory.
+
+[client]
+firm_name = "Coastal Law Ltd"
+reviewed_by = "J. Smith (TAS)"
+engine_version = "1.0.0"
+review_period = "May 2026"
+
+[paths]
+input_dir = "../../data/sample"
+output_dir = "../../output/coastal_law"
+
+[thresholds]
+dormancy_threshold_days = 365
+unreconciled_age_days = 30
+unmatched_bank_days = 5
+fit_transfer_days = 14
+
+[rules]
+enabled = [
+  "R01_OVERDRAWN_CLIENT_LEDGER",
+  "R02_DORMANT_BALANCE",
+  "R03_RECON_BREAK",
+  "R04_UNMATCHED_BANK_LINE",
+  "R05_UNRECONCILED_AGEING",
+  "R06_FIT_OVERHELD",
+  "R07_FEE_WITHOUT_INVOICE",
+]
+
+# [column_map] is optional. Omit it entirely if your export already uses the
+# engine's internal field names (see docs/DATA_HANDLING_BOUNDARY.md).
+#
+# Internal field names for reference:
+#   matter_register:        matter_ref, client_name, matter_type, status,
+#                           open_date, last_activity_date, current_balance_nzd
+#   client_ledger:          entry_id, matter_ref, entry_date, description,
+#                           receipt_nzd, payment_nzd, balance_after_nzd,
+#                           reconciled, reference
+#   trust_bank_statement:   statement_id, transaction_date, description,
+#                           credit_nzd, debit_nzd, running_balance_nzd,
+#                           matched_ledger_entry
+#   reconciliation_summary: recon_id, period_end_date, ledger_total_nzd,
+#                           bank_balance_nzd, difference_nzd, status
+#
+# Example (Actionstep export):
+# [column_map.matter_register]
+# matter_ref  = "Matter Reference"
+# client_name = "Client Full Name"
+#
+# [column_map.client_ledger]
+# entry_id   = "Entry"
+# entry_date = "Date"

@@ -1,0 +1,43 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+venv/
+.venv/
+*.egg-info/
+
+# --- Node ---
+node_modules/
+dist/
+
+# --- Env ---
+.env
+.env.*
+
+# --- Runtime output ---
+output/
+
+# --- Private planning / prep documents ---
+BUILD_PROGRESS.md
+trust-account-integrity-engine/
+CLIENT-Proposal-TrustLedger-Monitoring.md
+FOUNDER-Build-and-Prep-Plan.md
+BUILD_ORCHESTRATION.md
+archive of suggestions/
+pitch\[to firms\]/
+Trust Account Integrity Engine \(web design\)/
+docs/superpowers/
+Velocity $100k Challenge Entry Form Stage ONE 2026.pdf
+Data_integrity engine.rar
+Mockup 2.zip
+
+# --- Tool artefacts ---
+.playwright-mcp/
+.claude/
+CLAUDE.md
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+*.swp
