@@ -1,6 +1,6 @@
 # Trust Account Integrity Engine
 
-A Python rules engine that checks NZ law firm trust account ledgers against the *Lawyers and Conveyancers Act (Trust Account) Regulations 2008*. It ingests CSV exports, evaluates seven deterministic compliance rules, and produces a dated exception report with source evidence.
+A Python rules engine that checks NZ law firm trust account ledgers against the *Lawyers and Conveyancers Act (Trust Account) Regulations 2008*. It ingests CSV exports, evaluates eleven deterministic compliance rules, and produces a dated exception report, evidence pack, and per-matter funds-trail report with source evidence.
 
 **Live demo →** https://trust-account-integrity-engine.vercel.app/
 
@@ -20,21 +20,25 @@ LLMs are unreliable at multi-step arithmetic over large tables and produce non-d
 
 ## Verification Discipline
 
-Every rule's regulation citation was verified against legislation.govt.nz (reprint as at 1 Jul 2022), with the verification date recorded in each rule file's docstring. R02 and R06 were additionally verified against the NZLS Lawyers Trust Accounting Guidelines, June 2024.
+R01–R07 citations were verified against legislation.govt.nz (reprint as at 1 Jul 2022), with the verification date recorded in each rule file's docstring. R02 and R06 were additionally verified against the NZLS Lawyers Trust Accounting Guidelines, June 2024. R08–R12 citations are **PROVISIONAL** — pending independent verification against legislation.govt.nz by the maintainer (see each rule file's docstring).
 
 Citation strings used verbatim throughout the codebase:
 
-| ID  | Citation |
-|-----|----------|
-| R01 | `LCA (Trust Account) Regulations 2008, Reg 6 and Reg 12(6)(a)` |
-| R02 | `LCA (Trust Account) Regulations 2008, Reg 12(7); LTAG June 2024 (guidance)` |
-| R03 | `LCA (Trust Account) Regulations 2008, Reg 17 (with Reg 11)` |
-| R04 | `LCA (Trust Account) Regulations 2008, Reg 11` |
-| R05 | `LCA (Trust Account) Regulations 2008, Reg 11 / Reg 17` |
-| R06 | `LCA 2006, s110; LCA (Trust Account) Regulations 2008, Reg 8/Reg 9` |
-| R07 | `LCA (Trust Account) Regulations 2008, Reg 9` |
+| ID  | Citation | Status |
+|-----|----------|--------|
+| R01 | `LCA (Trust Account) Regulations 2008, Reg 6 and Reg 12(6)(a)` | Verified |
+| R02 | `LCA (Trust Account) Regulations 2008, Reg 12(7); LTAG June 2024 (guidance)` | Verified |
+| R03 | `LCA (Trust Account) Regulations 2008, Reg 17 (with Reg 11)` | Verified |
+| R04 | `LCA (Trust Account) Regulations 2008, Reg 11` | Verified |
+| R05 | `LCA (Trust Account) Regulations 2008, Reg 11 / Reg 17` | Verified |
+| R06 | `LCA 2006, s110; LCA (Trust Account) Regulations 2008, Reg 8/Reg 9` | Verified |
+| R07 | `LCA (Trust Account) Regulations 2008, Reg 9` | Verified |
+| R08 | `LCA (Trust Account) Regulations 2008, Reg 9` | PROVISIONAL |
+| R09 | `LCA (Trust Account) Regulations 2008, Reg 9` | PROVISIONAL |
+| R10 | `LCA (Trust Account) Regulations 2008, Reg 9` | PROVISIONAL |
+| R12 | `LCA (Trust Account) Regulations 2008, Reg 11 / Reg 12(1)` | PROVISIONAL |
 
-Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 333 tests, 0 skipped.
+Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 444 tests, 0 skipped.
 
 ---
 
@@ -42,15 +46,19 @@ Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthe
 
 Each rule maps to a numbered regulation or identified guidance. Where the regulations prescribe no interval, thresholds are configurable and documented as firm-policy defaults (see Limitations).
 
-| ID  | Rule                    | Severity |
-|-----|-------------------------|----------|
-| R01 | Overdrawn client ledger | CRITICAL |
-| R02 | Dormant balance         | HIGH     |
-| R03 | Reconciliation break    | CRITICAL |
-| R04 | Unmatched bank line     | HIGH     |
-| R05 | Unreconciled ageing     | HIGH     |
-| R06 | FIT overheld            | HIGH     |
-| R07 | Fee without invoice     | HIGH     |
+| ID  | Rule                        | Severity | Citation status |
+|-----|-----------------------------|----------|-----------------|
+| R01 | Overdrawn client ledger     | CRITICAL | Verified |
+| R02 | Dormant balance             | HIGH     | Verified |
+| R03 | Reconciliation break        | CRITICAL | Verified |
+| R04 | Unmatched bank line         | HIGH     | Verified |
+| R05 | Unreconciled ageing         | HIGH     | Verified |
+| R06 | FIT overheld                | HIGH     | Verified |
+| R07 | Fee without invoice         | HIGH     | Verified |
+| R08 | Fee invoice missing         | HIGH     | PROVISIONAL |
+| R09 | Fee exceeds invoice         | HIGH     | PROVISIONAL |
+| R10 | Invoice postdates payment   | HIGH     | PROVISIONAL |
+| R12 | Bulk deposit unallocated    | CRITICAL | PROVISIONAL |
 
 ---
 
@@ -77,11 +85,11 @@ python run.py trust_domain/config/coastal_law.toml
 
 Outputs land in `output/<firm-slug>/`:
 
-- `exception_report.md` — human-readable exception report
-- `exception_report.json` — machine-readable version for downstream tooling
-- `exception_report.pdf` — printable report
-- `evidence/` — per-rule evidence CSVs
+- `exception_report.md` / `.json` / `.pdf` — violation report in three formats
+- `evidence_pack.md` — per-rule summary with record counts
+- `funds_trail.md` / `.json` — per-matter receipt and fee-payment chain with allocation and invoice status
 - `frontend_payload.json` — data bundle for the React frontend
+- `run_log.json` — reproducibility log (inputs, rules applied, timestamps)
 
 ---
 
@@ -91,14 +99,14 @@ Outputs land in `output/<firm-slug>/`:
 pytest
 ```
 
-333 tests, 0 skipped. Coverage spans every rule, the ingestion layer, the report writer, the run-log layer, and the evidence pack.
+444 tests, 0 skipped. Coverage spans every rule, the ingestion layer, the report writers, the run-log layer, the evidence pack, and the funds-trail report.
 
 ---
 
 ## Limitations
 
 - Synthetic data only — not yet run against a real firm's production ledger.
-- Seven rules cover a significant subset of the Regulations, not every obligation.
+- Eleven rules cover a significant subset of the Regulations, not every obligation.
 - Thresholds for R02 (dormancy) and R06 (FIT transfer deadline) are configurable firm-policy defaults, not statutory periods; the Regulations do not prescribe these exact intervals.
 - This tool supports but never replaces the Trust Account Supervisor. The TAS remains solely responsible for the Reg 17 certification.
 
@@ -118,14 +126,14 @@ pytest
 
 ```
 trust_domain/
-  rules/          # Seven compliance rule modules (r01–r07)
+  rules/          # Eleven compliance rule modules (r01–r12, no r11)
   config/         # Firm TOML configuration + schema
   ingestion/      # CSV loader and column-map normaliser
   reports/        # Markdown / PDF / evidence-pack writers
   synthetic/      # Synthetic ledger data generator
 integrity_engine/ # Rule-runner, run log, flagging, stats
 data/sample/      # Synthetic demo ledger (CSV)
-tests/            # 333 pytest tests
+tests/            # 444 pytest tests
 docs/             # Data-handling boundary, onboarding, demo guide
 ```
 
