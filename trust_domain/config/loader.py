@@ -36,6 +36,11 @@ _THRESHOLD_FIELDS = [
     "fit_transfer_days",
 ]
 
+# Float thresholds — validated separately (allow 0.0 and positive values)
+_FLOAT_THRESHOLD_DEFAULTS: dict[str, float] = {
+    "bulk_min_nzd": 0.0,
+}
+
 
 class ConfigError(Exception):
     """Raised when a client config file is missing or has invalid fields."""
@@ -92,6 +97,16 @@ def load_config(path: Path) -> ClientConfig:
             )
         threshold_values[key] = value
 
+    # --- Float thresholds: must be non-negative numbers ---
+    float_threshold_values: dict[str, float] = {}
+    for key, default in _FLOAT_THRESHOLD_DEFAULTS.items():
+        value = thresholds.get(key, default)
+        if not isinstance(value, (int, float)) or value < 0:
+            raise ConfigError(
+                f"Threshold '{key}' must be a non-negative number, got: {value!r}"
+            )
+        float_threshold_values[key] = float(value)
+
     # --- enabled_rules: must all be known ---
     enabled_rules: list[str] = rules_section.get("enabled", list(_ALL_RULE_IDS))
     for rule_id in enabled_rules:
@@ -118,6 +133,7 @@ def load_config(path: Path) -> ClientConfig:
         unreconciled_age_days=threshold_values["unreconciled_age_days"],
         unmatched_bank_days=threshold_values["unmatched_bank_days"],
         fit_transfer_days=threshold_values["fit_transfer_days"],
+        bulk_min_nzd=float_threshold_values["bulk_min_nzd"],
         enabled_rules=enabled_rules,
         column_map=column_map_raw,
     )

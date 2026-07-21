@@ -27,6 +27,8 @@ _FLOAT_FIELDS: dict[str, set[str]] = {
     "reconciliation_summary": {
         "ledger_total_nzd", "bank_balance_nzd", "difference_nzd"
     },
+    "invoice_register": {"amount_nzd"},
+    "allocations": {"amount_nzd"},
 }
 
 # The field that acts as the unique identifier per file.
@@ -35,6 +37,8 @@ _ID_FIELDS: dict[str, str] = {
     "client_ledger": "entry_id",
     "trust_bank_statement": "statement_id",
     "reconciliation_summary": "recon_id",
+    "invoice_register": "invoice_id",
+    "allocations": "bank_line_id",
 }
 
 
@@ -61,6 +65,14 @@ def load_file(name: str, sample_dir: Path = _DEFAULT_DIR) -> list[Record]:
     return records
 
 
+_CORE_DATASET_NAMES = (
+    "matter_register",
+    "client_ledger",
+    "trust_bank_statement",
+    "reconciliation_summary",
+)
+
+
 def load_all(sample_dir: Path = _DEFAULT_DIR) -> dict[str, list[Record]]:
-    """Load all four sample CSV files, returning a dict keyed by file name."""
-    return {name: load_file(name, sample_dir) for name in _ID_FIELDS}
+    """Load the four core sample CSV files, returning a dict keyed by file name."""
+    return {name: load_file(name, sample_dir) for name in _CORE_DATASET_NAMES}

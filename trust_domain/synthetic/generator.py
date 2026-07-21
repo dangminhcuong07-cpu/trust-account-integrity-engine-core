@@ -2,16 +2,22 @@
 """
 Enhanced trust ledger data generator for the trust_domain rule suite.
 
-Produces four CSV files identical in structure to data/sample/ but with
-targeted changes required to exercise all seven trust-domain rules:
+Produces six CSV files identical in structure to data/sample/ but with
+targeted changes required to exercise all trust-domain rules:
 
-  ERR-1  R05_UNRECONCILED_AGEING  — L009, reconciled=N, 89 days old
-  ERR-2  R01_OVERDRAWN_CLIENT_LEDGER — L021, balance_after=-2500.00
-  ERR-3  R02_DORMANT_BALANCE      — M017, last_activity=2024-12-15 (557 days)
-  ERR-4  R03_RECON_BREAK          — R002, ledger=798500 vs bank=798750
-  ERR-5  R04_UNMATCHED_BANK_LINE  — B031, matched_ledger_entry="" (34 days old)
-  ERR-6  R06_FIT_OVERHELD         — M021, FIT balance 24 days old (> 14 threshold)
-  ERR-7  R07_FEE_WITHOUT_INVOICE  — L037, disbursement without INV-XXXXX reference
+  ERR-1  R05_UNRECONCILED_AGEING        — L009, reconciled=N, 89 days old
+  ERR-2  R01_OVERDRAWN_CLIENT_LEDGER    — L021, balance_after=-2500.00
+  ERR-3  R02_DORMANT_BALANCE            — M017, last_activity=2024-12-15 (557 days)
+  ERR-4  R03_RECON_BREAK                — R002, ledger=798500 vs bank=798750
+  ERR-5  R04_UNMATCHED_BANK_LINE        — B031, matched_ledger_entry="" (34 days old)
+  ERR-6  R06_FIT_OVERHELD               — M021, FIT balance 24 days old (> 14 threshold)
+  ERR-7  R07_FEE_WITHOUT_INVOICE        — L037, disbursement without INV-XXXXX reference
+  ERR-8  R08_FEE_INVOICE_MISSING        — L039, INV-99999 absent from invoice_register
+  ERR-9  R09_FEE_EXCEEDS_INVOICE        — L040, payment $5,000 > invoice $3,000 (INV-00236)
+  ERR-10 R10_INVOICE_POSTDATES_PAYMENT  — L041, INV-00237 issued 2026-06-15 > payment 2026-06-01
+  ERR-12a R12_BULK_DEPOSIT_UNALLOCATED  — B046, allocations sum $7,500 < credit $9,000
+  ERR-12b R12_BULK_DEPOSIT_UNALLOCATED  — B047, allocations sum $5,500 > credit $5,000
+  ERR-12c R12_BULK_DEPOSIT_UNALLOCATED  — B048, credit $15,000 with zero allocations
 
 Key differences from data/generate_sample.py (DO NOT MODIFY THAT FILE):
   - LEDGER_HEADERS gains a "reference" column (all existing rows get "")
@@ -26,6 +32,12 @@ Key differences from data/generate_sample.py (DO NOT MODIFY THAT FILE):
   - L037 added (disbursement without invoice — ERR-7 seed)
   - L038 added (fee WITH invoice — clean counterpart to L037)
   - B038-B040 added (bank counterparts to L036-L038)
+  - L039-L051 added (ERR-8/9/10 seeds + R12 allocation receipts + B049 true-negative)
+  - B041-B049 added (bank counterparts + R12 bulk deposit seeds + clean true-negative)
+  - invoice_register.csv added (3 rows; INV-99999 deliberately absent for ERR-8)
+  - allocations.csv added (9 rows; B046 under, B047 over, B048 absent, B049 exact-match)
+  - Matter balances updated: M003→89000, M004→32650, M005→7500, M007→67000,
+    M008→125000, M012→57800, M015→27500, M018→37500, M020→75500
   - Output directory: trust_domain/synthetic/sample/
 
 Usage:
@@ -50,28 +62,36 @@ MATTER_ROWS = [
     # Clean matters
     ("M001", "Anderson, James & Susan",        "01-0100-0123456-00", "PROPERTY_PURCHASE", "Purchase of 15 Pohutukawa Drive, Takapuna",         "2026-03-01", "2026-04-15", "2026-04-15",    "0.00",       "CLOSED"),
     ("M002", "Patel, Raj & Anita",             "12-3142-0567890-00", "PROPERTY_PURCHASE", "Purchase of 7B Manukau Road, Epsom",                "2026-03-05", "2026-04-28", "2026-04-28",    "0.00",       "CLOSED"),
-    ("M003", "Estate of R.J. Williams (dec.)", "01-0168-0891234-00", "ESTATE",            "Administration of estate - Williams",               "2026-02-14", "",           "2026-04-05",    "85000.00",   "ACTIVE"),
-    ("M004", "Chen, Wei & Mei",                "38-9003-0456789-00", "PROPERTY_PURCHASE", "Purchase of 22 Rata Street, Mount Albert",          "2026-04-08", "",           "2026-04-08",    "30000.00",   "ACTIVE"),
-    ("M005", "Tauranga Commercial Props Ltd",  "03-0743-0789012-00", "COMMERCIAL",        "Commercial lease deposit - Bay Plaza",              "2026-03-20", "",           "2026-05-02",    "5000.00",    "ACTIVE"),
+    # M003 balance updated: 85000 + 4000 (L049 receipt) = 89000
+    ("M003", "Estate of R.J. Williams (dec.)", "01-0168-0891234-00", "ESTATE",            "Administration of estate - Williams",               "2026-02-14", "",           "2026-06-24",    "89000.00",   "ACTIVE"),
+    # M004 balance updated: 30000 - 350 (L039 fee) + 3000 (L042 receipt) = 32650
+    ("M004", "Chen, Wei & Mei",                "38-9003-0456789-00", "PROPERTY_PURCHASE", "Purchase of 22 Rata Street, Mount Albert",          "2026-04-08", "",           "2026-06-20",    "32650.00",   "ACTIVE"),
+    # M005 balance updated: 5000 + 2500 (L043 receipt) = 7500
+    ("M005", "Tauranga Commercial Props Ltd",  "03-0743-0789012-00", "COMMERCIAL",        "Commercial lease deposit - Bay Plaza",              "2026-03-20", "",           "2026-06-20",    "7500.00",    "ACTIVE"),
     ("M006", "Ngata, Hemi & Aroha",            "01-0104-0348592-02", "PROPERTY_SALE",     "Sale of 8 Kauri Crescent, Henderson",               "2026-03-10", "2026-04-01", "2026-04-01",    "7500.00",    "CLOSED"),
-    ("M007", "Okonkwo, Chidi",                 "06-0167-0901234-00", "PROPERTY_PURCHASE", "Purchase of 3A Lake Road, Takapuna",                "2026-04-15", "",           "2026-04-15",    "65000.00",   "ACTIVE"),
-    ("M008", "Schmidt, Klaus & Ingrid",        "38-9011-0345678-00", "PROPERTY_PURCHASE", "Purchase of 45 Remuera Road, Remuera",              "2026-03-28", "",           "2026-03-28",    "120000.00",  "ACTIVE"),
+    # M007 balance updated: 65000 + 2000 (L044 receipt) = 67000
+    ("M007", "Okonkwo, Chidi",                 "06-0167-0901234-00", "PROPERTY_PURCHASE", "Purchase of 3A Lake Road, Takapuna",                "2026-04-15", "",           "2026-06-20",    "67000.00",   "ACTIVE"),
+    # M008 balance updated: 120000 + 5000 (L050 receipt) = 125000
+    ("M008", "Schmidt, Klaus & Ingrid",        "38-9011-0345678-00", "PROPERTY_PURCHASE", "Purchase of 45 Remuera Road, Remuera",              "2026-03-28", "",           "2026-06-24",    "125000.00",  "ACTIVE"),
     ("M009", "Singh, Priya",                   "02-0128-0678901-00", "PROPERTY_SALE",     "Sale of 12 Totara Avenue, New Lynn",                "2026-04-02", "2026-05-12", "2026-05-12",    "5000.00",    "CLOSED"),
     ("M010", "Murphy Estate Trust",            "01-0748-0789012-00", "ESTATE",            "Estate distribution - Murphy",                      "2026-02-01", "2026-04-20", "2026-04-20",    "0.00",       "CLOSED"),
     ("M011", "Te Arawa Holdings Ltd",          "03-1550-0234567-00", "COMMERCIAL",        "Commercial settlement - Rotorua development",        "2026-05-01", "",           "2026-05-14",    "2000.00",    "ACTIVE"),
-    # M012 balance updated: 55000 - 200 (L037 disbursement) = 54800
-    ("M012", "Blackwood, Thomas J.",           "12-3052-0890123-00", "PROPERTY_PURCHASE", "Purchase of 6 Waimari Road, Westmere",              "2026-05-10", "",           "2026-05-28",    "54800.00",   "ACTIVE"),
+    # M012 balance updated: 55000 - 200 (L037 disbursement) + 3000 (L051 receipt) = 57800
+    ("M012", "Blackwood, Thomas J.",           "12-3052-0890123-00", "PROPERTY_PURCHASE", "Purchase of 6 Waimari Road, Westmere",              "2026-05-10", "",           "2026-06-24",    "57800.00",   "ACTIVE"),
     # M013 balance updated: 110000 - 500 (L038 fee) = 109500
     ("M013", "Liu, Jing & Yuan",               "02-0192-0456789-00", "PROPERTY_PURCHASE", "Purchase of 19 Prosford Street, Ponsonby",          "2026-05-15", "",           "2026-05-28",    "109500.00",  "ACTIVE"),
     ("M014", "Robertson, Sarah M.",            "01-0104-0567890-00", "PROPERTY_SALE",     "Sale of 27 Dominion Road, Mt Eden",                 "2026-04-20", "2026-06-05", "2026-06-05",    "5000.00",    "CLOSED"),
-    ("M015", "Garcia, Miguel A.",              "12-3164-0123456-00", "PROPERTY_PURCHASE", "Purchase of 4 The Strand, Parnell",                 "2026-05-20", "",           "2026-05-20",    "25000.00",   "ACTIVE"),
+    # M015 balance updated: 25000 - 500 (L041 disbursement) + 3000 (L045 receipt) = 27500
+    ("M015", "Garcia, Miguel A.",              "12-3164-0123456-00", "PROPERTY_PURCHASE", "Purchase of 4 The Strand, Parnell",                 "2026-05-20", "",           "2026-06-22",    "27500.00",   "ACTIVE"),
     # ERR-2: Overdrawn matter
     ("M016", "Fitzgerald, Declan & Erin",      "38-9008-0234567-00", "PROPERTY_PURCHASE", "Purchase of 11 Devonport Road, Devonport [ERR-2: OVERDRAWN]", "2026-03-15", "", "2026-04-28", "-2500.00",   "ACTIVE"),
     # ERR-3: Dormant matter (557 days as at 2026-06-25)
     ("M017", "Rowe, Margaret H. (Estate)",     "01-0748-0901234-00", "ESTATE",            "Administration of estate - Rowe [ERR-3: DORMANT - no activity since 2024-12-15]", "2024-11-01", "", "2024-12-15", "8500.00", "DORMANT"),
-    ("M018", "Kowalski, Adam & Ewa",           "02-0158-0678901-00", "PROPERTY_PURCHASE", "Purchase of 33 Sandringham Road, Sandringham",      "2026-05-28", "",           "2026-05-28",    "40000.00",   "ACTIVE"),
+    # M018 balance updated: 40000 - 5000 (L040 fee) + 2500 (L046 receipt) = 37500
+    ("M018", "Kowalski, Adam & Ewa",           "02-0158-0678901-00", "PROPERTY_PURCHASE", "Purchase of 33 Sandringham Road, Sandringham",      "2026-05-28", "",           "2026-06-22",    "37500.00",   "ACTIVE"),
     ("M019", "Nkosi, Thabo & Nomsa",           "03-0742-0345678-00", "PROPERTY_SALE",     "Sale of 9 Harbour View Road, Northcote",            "2026-04-25", "2026-06-10", "2026-06-10",    "0.00",       "CLOSED"),
-    ("M020", "Yamamoto, Kenji",                "38-9015-0789012-00", "PROPERTY_PURCHASE", "Purchase of 17 Gladstone Road, Parnell",            "2026-06-01", "",           "2026-06-01",    "70000.00",   "ACTIVE"),
+    # M020 balance updated: 70000 + 2500 (L047 receipt) + 3000 (L048 receipt) = 75500
+    ("M020", "Yamamoto, Kenji",                "38-9015-0789012-00", "PROPERTY_PURCHASE", "Purchase of 17 Gladstone Road, Parnell",            "2026-06-01", "",           "2026-06-24",    "75500.00",   "ACTIVE"),
     # ERR-6: FIT matter — balance held 24 days (2026-06-01 to 2026-06-25) > 14-day deadline
     ("M021", "Firm Interest in Trust (FIT account)", "01-0748-0234567-00", "FIT",         "FIT pooled trust interest account [ERR-6: OVERHELD - 24 days, deadline 14]", "2026-06-01", "", "2026-06-01", "125.00",  "ACTIVE"),
 ]
@@ -201,6 +221,41 @@ LEDGER_ROWS = [
     # Clean: fee WITH valid invoice reference — should NOT be flagged
     ("L038", "M013", "2026-05-28", "Fee - professional conveyancing services",
      "0.00",      "500.00",    "109500.00",  "Y", "2026-05-29", "", "INV-00234"),
+    # ERR-8: fee with well-formed INV reference that does NOT exist in invoice_register
+    # INV-99999 passes R07 format check but has no row in invoice_register — triggers R08
+    ("L039", "M004", "2026-06-10", "Fee - legal services",
+     "0.00",      "350.00",    "29650.00",   "Y", "2026-06-10", "ERR-8: INV-99999 absent from invoice_register", "INV-99999"),
+    # ERR-9: fee where payment_nzd ($5,000) exceeds invoice amount_nzd ($3,000) for INV-00236
+    ("L040", "M018", "2026-06-01", "Fee - professional legal services",
+     "0.00",      "5000.00",   "35000.00",   "Y", "2026-06-01", "ERR-9: payment $5,000 exceeds INV-00236 amount $3,000", "INV-00236"),
+    # ERR-10: disbursement where invoice INV-00237 was issued AFTER the payment date
+    # Payment date 2026-06-01 < invoice issue_date 2026-06-15 — triggers R10
+    ("L041", "M015", "2026-06-01", "Disbursement - search fee",
+     "0.00",      "500.00",    "24500.00",   "Y", "2026-06-01", "ERR-10: INV-00237 issued 2026-06-15 postdates payment 2026-06-01", "INV-00237"),
+    # Clean receipts for R12 bulk-deposit allocation seeds (B046: M004/M005/M007)
+    ("L042", "M004", "2026-06-20", "Receipt - client funds received (bulk deposit portion)",
+     "3000.00",   "0.00",      "32650.00",   "Y", "2026-06-20", "", ""),
+    ("L043", "M005", "2026-06-20", "Receipt - client funds received (bulk deposit portion)",
+     "2500.00",   "0.00",      "7500.00",    "Y", "2026-06-20", "", ""),
+    ("L044", "M007", "2026-06-20", "Receipt - client funds received (bulk deposit portion)",
+     "2000.00",   "0.00",      "67000.00",   "Y", "2026-06-20", "", ""),
+    # Clean receipts for R12 bulk-deposit allocation seeds (B047: M015/M018)
+    ("L045", "M015", "2026-06-22", "Receipt - client funds received (bulk deposit portion)",
+     "3000.00",   "0.00",      "27500.00",   "Y", "2026-06-22", "", ""),
+    ("L046", "M018", "2026-06-22", "Receipt - client funds received (bulk deposit portion)",
+     "2500.00",   "0.00",      "37500.00",   "Y", "2026-06-22", "", ""),
+    # Clean receipts for R12 fully-allocated and 1:1 cases (B044/B045: M020)
+    ("L047", "M020", "2026-06-24", "Receipt - purchase deposit instalment (bulk deposit)",
+     "2500.00",   "0.00",      "72500.00",   "Y", "2026-06-24", "", ""),
+    ("L048", "M020", "2026-06-24", "Receipt - purchase deposit balance (1:1 bank deposit)",
+     "3000.00",   "0.00",      "75500.00",   "Y", "2026-06-24", "", ""),
+    # Clean receipts for B049 true-negative: fully-allocated bulk deposit > $10,000
+    ("L049", "M003", "2026-06-24", "Receipt - client funds received (bulk deposit portion)",
+     "4000.00",   "0.00",      "89000.00",   "Y", "2026-06-24", "", ""),
+    ("L050", "M008", "2026-06-24", "Receipt - client funds received (bulk deposit portion)",
+     "5000.00",   "0.00",      "125000.00",  "Y", "2026-06-24", "", ""),
+    ("L051", "M012", "2026-06-24", "Receipt - client funds received (bulk deposit portion)",
+     "3000.00",   "0.00",      "57800.00",   "Y", "2026-06-24", "", ""),
 ]
 
 
@@ -263,6 +318,73 @@ BANK_ROWS = [
     ("B039", _TA, "2026-05-28", "Debit - LINZ title search fee (Blackwood)",      "0.00",      "200.00",    "645675.00",  "L037",          ""),
     # B040: Liu conveyancing fee (L038) — running 645675 - 500 = 645175
     ("B040", _TA, "2026-05-28", "Debit - Conveyancing fee (Liu)",                 "0.00",      "500.00",    "645175.00",  "L038",          ""),
+    # Bank entries for ERR-8/9/10 ledger rows L039-L041
+    # B041: Chen fee payment (L039) — 645175 - 350 = 644825
+    ("B041", _TA, "2026-06-10", "Debit - Legal services fee (Chen)",              "0.00",      "350.00",    "644825.00",  "L039",          ""),
+    # B042: Kowalski fee payment (L040) — 644825 - 5000 = 639825
+    ("B042", _TA, "2026-06-01", "Debit - Professional legal services fee (Kowalski)", "0.00", "5000.00",   "639825.00",  "L040",          ""),
+    # B043: Garcia disbursement (L041) — 639825 - 500 = 639325
+    ("B043", _TA, "2026-06-01", "Debit - Search fee disbursement (Garcia)",       "0.00",      "500.00",    "639325.00",  "L041",          ""),
+    # R12 bulk deposit cases.
+    # matched_ledger_entry is set to a non-ledger sentinel on B044/B046/B047 so R04 skips them
+    # (R04 only flags entries where matched_ledger_entry is empty).
+    # B048 keeps matched="" — it is a genuine orphan breach (no match, no allocations),
+    # caught by R04 AND later by R12.
+    #
+    # B044: credit $2,500 fully allocated to L047 via allocations.csv — R12 clean
+    ("B044", _TA, "2026-06-24", "Credit - Multi-client bulk deposit (M020 portion)", "2500.00", "0.00",    "641825.00",  "BULK-ALLOCATED", "R12 clean: fully allocated via allocations.csv"),
+    # B045: credit $3,000 with 1:1 matched_ledger_entry=L048 — R12 clean 1:1 case
+    ("B045", _TA, "2026-06-24", "Credit - Yamamoto deposit balance",              "3000.00",   "0.00",      "644825.00",  "L048",           "R12 clean: 1:1 matched_ledger_entry set"),
+    # ERR-12a: credit $9,000 with allocations summing only $7,500 — under-allocated
+    ("B046", _TA, "2026-06-24", "Credit - Multi-client bulk deposit (M004/M005/M007)", "9000.00", "0.00",  "653825.00",  "BULK-MULTI",     "ERR-12a: allocations sum $7,500 < credit $9,000"),
+    # ERR-12b: credit $5,000 with allocations summing $5,500 — over-allocated
+    ("B047", _TA, "2026-06-24", "Credit - Multi-client bulk deposit (M015/M018)", "5000.00",   "0.00",      "658825.00",  "BULK-MULTI",     "ERR-12b: allocations sum $5,500 > credit $5,000"),
+    # ERR-12c: credit $15,000 with zero allocations and no matched_ledger_entry (orphan)
+    # This triggers R04 (unmatched bank line, old enough) AND R12 (no allocation, no match).
+    ("B048", _TA, "2026-06-24", "Credit - Unallocated bulk deposit (source: M006 conveyancing)", "15000.00", "0.00", "673825.00", "",      "ERR-12c: $15,000 bulk credit with no allocation rows"),
+    # B049: clean true-negative for R12 — $12,000 bulk deposit fully allocated to L049/L050/L051
+    # allocations sum exactly equals credit: 4000 + 5000 + 3000 = 12000 (R12 PROVEN)
+    ("B049", _TA, "2026-06-24", "Credit - Multi-client bulk deposit (M003/M008/M012)", "12000.00", "0.00", "685825.00", "BULK-ALLOCATED", "R12 true-negative: fully allocated to L049/L050/L051"),
+]
+
+
+# ── Invoice register ──────────────────────────────────────────────────────────
+# Three rows only. INV-99999 (referenced in L039) is deliberately absent — ERR-8.
+
+INVOICE_HEADERS = ["invoice_id", "matter_ref", "amount_nzd", "issue_date", "description"]
+
+INVOICE_ROWS = [
+    # Clean: matches L038 (fee with valid invoice reference, payment <= amount)
+    ("INV-00234", "M013", "500.00",  "2026-05-20", "Professional conveyancing services"),
+    # ERR-9 seed: L040 pays $5,000 against this $3,000 invoice — fee exceeds invoice
+    ("INV-00236", "M018", "3000.00", "2026-05-20", "Professional legal services"),
+    # ERR-10 seed: L041 payment date 2026-06-01 is BEFORE this issue_date 2026-06-15
+    ("INV-00237", "M015", "1000.00", "2026-06-15", "Search fees and disbursements"),
+]
+
+
+# ── Allocations ───────────────────────────────────────────────────────────────
+# Maps bulk bank deposit portions to individual client ledger entries.
+# Columns: bank_line_id, ledger_entry_id, amount_nzd
+# B045 is not here (1:1 case — matched_ledger_entry set directly on the bank row).
+# B048 is not here (ERR-12c: zero allocations).
+
+ALLOCATION_HEADERS = ["bank_line_id", "ledger_entry_id", "amount_nzd"]
+
+ALLOCATION_ROWS = [
+    # B044 clean: $2,500 credit fully allocated to L047 ($2,500 == credit amount)
+    ("B044", "L047", "2500.00"),
+    # B046 ERR-12a: three portions summing $7,500 < B046 credit $9,000 (under-allocated)
+    ("B046", "L042", "3000.00"),
+    ("B046", "L043", "2500.00"),
+    ("B046", "L044", "2000.00"),
+    # B047 ERR-12b: two portions summing $5,500 > B047 credit $5,000 (over-allocated)
+    ("B047", "L045", "3000.00"),
+    ("B047", "L046", "2500.00"),
+    # B049 clean true-negative: three portions summing $12,000 == B049 credit $12,000
+    ("B049", "L049", "4000.00"),
+    ("B049", "L050", "5000.00"),
+    ("B049", "L051", "3000.00"),
 ]
 
 
@@ -303,10 +425,12 @@ def generate(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     counts = {
-        "matter_register":        _write_csv(output_dir / "matter_register.csv",       MATTER_HEADERS, MATTER_ROWS),
-        "client_ledger":          _write_csv(output_dir / "client_ledger.csv",          LEDGER_HEADERS, LEDGER_ROWS),
-        "trust_bank_statement":   _write_csv(output_dir / "trust_bank_statement.csv",   BANK_HEADERS,   BANK_ROWS),
-        "reconciliation_summary": _write_csv(output_dir / "reconciliation_summary.csv", RECON_HEADERS,  RECON_ROWS),
+        "matter_register":        _write_csv(output_dir / "matter_register.csv",       MATTER_HEADERS,    MATTER_ROWS),
+        "client_ledger":          _write_csv(output_dir / "client_ledger.csv",          LEDGER_HEADERS,    LEDGER_ROWS),
+        "trust_bank_statement":   _write_csv(output_dir / "trust_bank_statement.csv",   BANK_HEADERS,      BANK_ROWS),
+        "reconciliation_summary": _write_csv(output_dir / "reconciliation_summary.csv", RECON_HEADERS,     RECON_ROWS),
+        "invoice_register":       _write_csv(output_dir / "invoice_register.csv",       INVOICE_HEADERS,   INVOICE_ROWS),
+        "allocations":            _write_csv(output_dir / "allocations.csv",            ALLOCATION_HEADERS, ALLOCATION_ROWS),
     }
 
     print(f"\nTrust-domain synthetic data written to: {output_dir.resolve()}\n")
@@ -314,14 +438,20 @@ def generate(output_dir: Path) -> None:
         print(f"  {name}.csv  -  {n} rows")
 
     print("""
-Seeded errors (7 total):
-  ERR-1  Unreconciled entry > 30 days    ledger L009 / matter M008 / 89 days old
-  ERR-2  Overdrawn client matter         ledger L021 / matter M016 / balance -$2,500
-  ERR-3  Dormant matter with balance     matter M017 / balance $8,500 / last activity 2024-12-15
-  ERR-4  Reconciliation discrepancy      recon R002 / April 2026 / difference -$250
-  ERR-5  Orphan bank entry               bank B031 / $15,000 / 2026-05-22 / 34 days old
-  ERR-6  FIT balance overheld            matter M021 / $125.00 / 24 days old (deadline 14)
-  ERR-7  Fee without invoice reference   ledger L037 / M012 / $200 / reference=""
+Seeded errors (11 total):
+  ERR-1   Unreconciled entry > 30 days    ledger L009 / matter M008 / 89 days old
+  ERR-2   Overdrawn client matter         ledger L021 / matter M016 / balance -$2,500
+  ERR-3   Dormant matter with balance     matter M017 / balance $8,500 / last activity 2024-12-15
+  ERR-4   Reconciliation discrepancy      recon R002 / April 2026 / difference -$250
+  ERR-5   Orphan bank entry               bank B031 / $15,000 / 2026-05-22 / 34 days old
+  ERR-6   FIT balance overheld            matter M021 / $125.00 / 24 days old (deadline 14)
+  ERR-7   Fee without invoice reference   ledger L037 / M012 / $200 / reference=""
+  ERR-8   Fee with missing invoice        ledger L039 / M004 / INV-99999 absent from register
+  ERR-9   Fee exceeds invoice amount      ledger L040 / M018 / $5,000 > INV-00236 $3,000
+  ERR-10  Invoice postdates payment       ledger L041 / M015 / INV-00237 issued 2026-06-15 > payment 2026-06-01
+  ERR-12a Under-allocated bulk deposit    bank B046 / $9,000 / allocations sum $7,500
+  ERR-12b Over-allocated bulk deposit     bank B047 / $5,000 / allocations sum $5,500
+  ERR-12c Bulk deposit no allocations     bank B048 / $15,000 / zero allocation rows
 """)
 
 

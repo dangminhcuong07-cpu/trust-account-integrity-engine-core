@@ -50,11 +50,13 @@ class TestLoadConfigSuccess:
         assert config.unmatched_bank_days == 5
         assert config.fit_transfer_days == 14
 
-    def test_all_seven_rules_enabled(self):
+    def test_all_eleven_rules_enabled(self):
         config = load_config(COASTAL_LAW_TOML)
-        assert len(config.enabled_rules) == 7
+        assert len(config.enabled_rules) == 11
         assert "R01_OVERDRAWN_CLIENT_LEDGER" in config.enabled_rules
         assert "R07_FEE_WITHOUT_INVOICE" in config.enabled_rules
+        assert "R08_FEE_INVOICE_MISSING" in config.enabled_rules
+        assert "R12_BULK_DEPOSIT_UNALLOCATED" in config.enabled_rules
 
     def test_input_dir_is_absolute(self):
         config = load_config(COASTAL_LAW_TOML)

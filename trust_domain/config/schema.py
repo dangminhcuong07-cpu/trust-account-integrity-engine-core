@@ -18,6 +18,10 @@ _ALL_RULE_IDS: list[str] = [
     "R05_UNRECONCILED_AGEING",
     "R06_FIT_OVERHELD",
     "R07_FEE_WITHOUT_INVOICE",
+    "R08_FEE_INVOICE_MISSING",
+    "R09_FEE_EXCEEDS_INVOICE",
+    "R10_INVOICE_POSTDATES_PAYMENT",
+    "R12_BULK_DEPOSIT_UNALLOCATED",
 ]
 
 
@@ -37,6 +41,7 @@ class ClientConfig:
     unreconciled_age_days: int = 30
     unmatched_bank_days: int = 5
     fit_transfer_days: int = 14
+    bulk_min_nzd: float = 0.0
 
     # Rules to run — default: all seven
     enabled_rules: list = field(default_factory=lambda: list(_ALL_RULE_IDS))

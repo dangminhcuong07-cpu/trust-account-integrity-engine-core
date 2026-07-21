@@ -39,3 +39,12 @@ B037,01-0748-0234567-00,2026-06-10,Debit - Nkosi final payment,0.00,5000.00,6457
 B038,01-0748-0234567-00,2026-06-01,Credit - Trust account interest (Jun 2026 FIT),125.00,0.00,645875.00,L036,
 B039,01-0748-0234567-00,2026-05-28,Debit - LINZ title search fee (Blackwood),0.00,200.00,645675.00,L037,
 B040,01-0748-0234567-00,2026-05-28,Debit - Conveyancing fee (Liu),0.00,500.00,645175.00,L038,
+B041,01-0748-0234567-00,2026-06-10,Debit - Legal services fee (Chen),0.00,350.00,644825.00,L039,
+B042,01-0748-0234567-00,2026-06-01,Debit - Professional legal services fee (Kowalski),0.00,5000.00,639825.00,L040,
+B043,01-0748-0234567-00,2026-06-01,Debit - Search fee disbursement (Garcia),0.00,500.00,639325.00,L041,
+B044,01-0748-0234567-00,2026-06-24,Credit - Multi-client bulk deposit (M020 portion),2500.00,0.00,641825.00,BULK-ALLOCATED,R12 clean: fully allocated via allocations.csv
+B045,01-0748-0234567-00,2026-06-24,Credit - Yamamoto deposit balance,3000.00,0.00,644825.00,L048,R12 clean: 1:1 matched_ledger_entry set
+B046,01-0748-0234567-00,2026-06-24,Credit - Multi-client bulk deposit (M004/M005/M007),9000.00,0.00,653825.00,BULK-MULTI,"ERR-12a: allocations sum $7,500 < credit $9,000"
+B047,01-0748-0234567-00,2026-06-24,Credit - Multi-client bulk deposit (M015/M018),5000.00,0.00,658825.00,BULK-MULTI,"ERR-12b: allocations sum $5,500 > credit $5,000"
+B048,01-0748-0234567-00,2026-06-24,Credit - Unallocated bulk deposit (source: M006 conveyancing),15000.00,0.00,673825.00,,"ERR-12c: $15,000 bulk credit with no allocation rows"
+B049,01-0748-0234567-00,2026-06-24,Credit - Multi-client bulk deposit (M003/M008/M012),12000.00,0.00,685825.00,BULK-ALLOCATED,R12 true-negative: fully allocated to L049/L050/L051

@@ -46,12 +46,20 @@ class TestFilesCreated:
     def test_reconciliation_summary_exists(self, generated):
         assert (generated / "reconciliation_summary.csv").exists()
 
+    def test_invoice_register_exists(self, generated):
+        assert (generated / "invoice_register.csv").exists()
+
+    def test_allocations_exists(self, generated):
+        assert (generated / "allocations.csv").exists()
+
     def test_no_extra_files_written(self, generated):
         expected = {
             "matter_register.csv",
             "client_ledger.csv",
             "trust_bank_statement.csv",
             "reconciliation_summary.csv",
+            "invoice_register.csv",
+            "allocations.csv",
         }
         actual = {f.name for f in generated.iterdir()}
         assert actual == expected
@@ -68,15 +76,23 @@ class TestRowCounts:
 
     def test_client_ledger_row_count(self, generated):
         rows = _read_csv(generated / "client_ledger.csv")
-        assert len(rows) == 38, f"Expected 38 ledger entries, got {len(rows)}"
+        assert len(rows) == 51, f"Expected 51 ledger entries, got {len(rows)}"
 
     def test_trust_bank_statement_row_count(self, generated):
         rows = _read_csv(generated / "trust_bank_statement.csv")
-        assert len(rows) == 40, f"Expected 40 bank lines, got {len(rows)}"
+        assert len(rows) == 49, f"Expected 49 bank lines, got {len(rows)}"
 
     def test_reconciliation_summary_row_count(self, generated):
         rows = _read_csv(generated / "reconciliation_summary.csv")
         assert len(rows) == 3, f"Expected 3 recon rows, got {len(rows)}"
+
+    def test_invoice_register_row_count(self, generated):
+        rows = _read_csv(generated / "invoice_register.csv")
+        assert len(rows) == 3, f"Expected 3 invoice rows, got {len(rows)}"
+
+    def test_allocations_row_count(self, generated):
+        rows = _read_csv(generated / "allocations.csv")
+        assert len(rows) == 9, f"Expected 9 allocation rows, got {len(rows)}"
 
 
 # ---------------------------------------------------------------------------
@@ -227,3 +243,126 @@ class TestFalsePositivePrevention:
         assert entry.get("reference", "").startswith("INV-"), (
             "L038 must have a valid INV-XXXXX reference (clean counterpart to L037)"
         )
+
+
+# ---------------------------------------------------------------------------
+# Group 5 — ERR-8/9/10/12 seeded error records present
+# ---------------------------------------------------------------------------
+
+class TestNewSeededErrorRecordsPresent:
+    """
+    Confirms the ERR-8 through ERR-12 records exist with the right field
+    values. Does not run rule logic.
+    """
+
+    def test_err8_l039_fee_with_missing_invoice(self, generated):
+        rows = _read_csv(generated / "client_ledger.csv")
+        entry = next((r for r in rows if r["entry_id"] == "L039"), None)
+        assert entry is not None, "L039 not found in client_ledger.csv"
+        assert entry["reference"] == "INV-99999", (
+            "L039 must reference INV-99999 (well-formed but absent from invoice_register)"
+        )
+        assert float(entry["payment_nzd"]) > 0, "L039 must have payment > 0"
+
+    def test_err8_inv99999_absent_from_invoice_register(self, generated):
+        rows = _read_csv(generated / "invoice_register.csv")
+        ids = {r["invoice_id"] for r in rows}
+        assert "INV-99999" not in ids, (
+            "INV-99999 must NOT appear in invoice_register (ERR-8: missing invoice)"
+        )
+
+    def test_err9_l040_payment_exceeds_invoice(self, generated):
+        rows = _read_csv(generated / "client_ledger.csv")
+        entry = next((r for r in rows if r["entry_id"] == "L040"), None)
+        assert entry is not None, "L040 not found in client_ledger.csv"
+        assert entry["reference"] == "INV-00236", "L040 must reference INV-00236"
+        inv_rows = _read_csv(generated / "invoice_register.csv")
+        inv = next((r for r in inv_rows if r["invoice_id"] == "INV-00236"), None)
+        assert inv is not None, "INV-00236 must exist in invoice_register"
+        assert float(entry["payment_nzd"]) > float(inv["amount_nzd"]), (
+            f"L040 payment {entry['payment_nzd']} must exceed INV-00236 amount {inv['amount_nzd']} (ERR-9)"
+        )
+
+    def test_err10_l041_payment_before_invoice_issue(self, generated):
+        rows = _read_csv(generated / "client_ledger.csv")
+        entry = next((r for r in rows if r["entry_id"] == "L041"), None)
+        assert entry is not None, "L041 not found in client_ledger.csv"
+        assert entry["reference"] == "INV-00237", "L041 must reference INV-00237"
+        inv_rows = _read_csv(generated / "invoice_register.csv")
+        inv = next((r for r in inv_rows if r["invoice_id"] == "INV-00237"), None)
+        assert inv is not None, "INV-00237 must exist in invoice_register"
+        assert entry["entry_date"] < inv["issue_date"], (
+            f"L041 entry_date {entry['entry_date']} must be before INV-00237 "
+            f"issue_date {inv['issue_date']} (ERR-10)"
+        )
+
+    def test_err12a_b046_under_allocated(self, generated):
+        bank_rows = _read_csv(generated / "trust_bank_statement.csv")
+        line = next((r for r in bank_rows if r["statement_id"] == "B046"), None)
+        assert line is not None, "B046 not found in trust_bank_statement.csv"
+        credit = float(line["credit_nzd"])
+        alloc_rows = _read_csv(generated / "allocations.csv")
+        alloc_sum = sum(float(r["amount_nzd"]) for r in alloc_rows if r["bank_line_id"] == "B046")
+        assert alloc_sum < credit, (
+            f"B046: allocations sum {alloc_sum} must be less than credit {credit} (ERR-12a)"
+        )
+
+    def test_err12b_b047_over_allocated(self, generated):
+        bank_rows = _read_csv(generated / "trust_bank_statement.csv")
+        line = next((r for r in bank_rows if r["statement_id"] == "B047"), None)
+        assert line is not None, "B047 not found in trust_bank_statement.csv"
+        credit = float(line["credit_nzd"])
+        alloc_rows = _read_csv(generated / "allocations.csv")
+        alloc_sum = sum(float(r["amount_nzd"]) for r in alloc_rows if r["bank_line_id"] == "B047")
+        assert alloc_sum > credit, (
+            f"B047: allocations sum {alloc_sum} must exceed credit {credit} (ERR-12b)"
+        )
+
+    def test_err12c_b048_no_allocations(self, generated):
+        bank_rows = _read_csv(generated / "trust_bank_statement.csv")
+        line = next((r for r in bank_rows if r["statement_id"] == "B048"), None)
+        assert line is not None, "B048 not found in trust_bank_statement.csv"
+        assert float(line["credit_nzd"]) > 0, "B048 must be a credit line"
+        alloc_rows = _read_csv(generated / "allocations.csv")
+        b048_allocs = [r for r in alloc_rows if r["bank_line_id"] == "B048"]
+        assert len(b048_allocs) == 0, (
+            f"B048 must have zero allocation rows (ERR-12c), got {len(b048_allocs)}"
+        )
+
+    def test_b044_clean_fully_allocated(self, generated):
+        bank_rows = _read_csv(generated / "trust_bank_statement.csv")
+        line = next((r for r in bank_rows if r["statement_id"] == "B044"), None)
+        assert line is not None, "B044 not found in trust_bank_statement.csv"
+        credit = float(line["credit_nzd"])
+        alloc_rows = _read_csv(generated / "allocations.csv")
+        alloc_sum = sum(float(r["amount_nzd"]) for r in alloc_rows if r["bank_line_id"] == "B044")
+        assert alloc_sum == credit, (
+            f"B044 clean case: allocations sum {alloc_sum} must equal credit {credit}"
+        )
+
+    def test_b045_clean_one_to_one_match(self, generated):
+        bank_rows = _read_csv(generated / "trust_bank_statement.csv")
+        line = next((r for r in bank_rows if r["statement_id"] == "B045"), None)
+        assert line is not None, "B045 not found in trust_bank_statement.csv"
+        assert line["matched_ledger_entry"] == "L048", (
+            "B045 clean 1:1 case must have matched_ledger_entry=L048"
+        )
+
+    def test_b049_clean_true_negative_fully_allocated(self, generated):
+        bank_rows = _read_csv(generated / "trust_bank_statement.csv")
+        line = next((r for r in bank_rows if r["statement_id"] == "B049"), None)
+        assert line is not None, "B049 not found in trust_bank_statement.csv"
+        credit = float(line["credit_nzd"])
+        assert credit > 10000, f"B049 must be > $10,000, got ${credit:,.2f}"
+        alloc_rows = _read_csv(generated / "allocations.csv")
+        alloc_sum = sum(float(r["amount_nzd"]) for r in alloc_rows if r["bank_line_id"] == "B049")
+        assert alloc_sum == credit, (
+            f"B049 true-negative: allocations sum {alloc_sum} must equal credit {credit}"
+        )
+        ledger_rows = _read_csv(generated / "client_ledger.csv")
+        ledger_ids = {r["entry_id"] for r in ledger_rows}
+        b049_ledger_refs = [r["ledger_entry_id"] for r in alloc_rows if r["bank_line_id"] == "B049"]
+        for ref in b049_ledger_refs:
+            assert ref in ledger_ids, (
+                f"B049 allocation ledger_entry_id {ref!r} not found in client_ledger.csv"
+            )

@@ -99,6 +99,7 @@ def adapt_full_report(
     report_dict: dict,
     pack_dict: dict,
     output_dir: Path,
+    funds_trail_dict: dict | None = None,
 ) -> dict:
     """
     Build the complete frontend payload and write frontend_payload.json.
@@ -125,6 +126,9 @@ def adapt_full_report(
             "generatedAt":     report_dict["generated_at"],
         },
     }
+
+    if funds_trail_dict is not None:
+        payload["fundsTrail"] = funds_trail_dict
 
     (output_dir / "frontend_payload.json").write_text(
         json.dumps(payload, indent=2), encoding="utf-8"

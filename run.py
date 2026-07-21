@@ -18,6 +18,7 @@ from trust_domain.reports.evidence_pack import generate_evidence_pack
 from trust_domain.reports.frontend_adapter import adapt_full_report
 from trust_domain.reports.generate_data_ts import generate_data_ts
 from trust_domain.reports.run_log import write_run_log
+from trust_domain.reports.funds_trail import write_funds_trail
 
 _DATASET_NAMES = [
     "matter_register",
@@ -25,6 +26,13 @@ _DATASET_NAMES = [
     "trust_bank_statement",
     "reconciliation_summary",
 ]
+
+# Rules that require the invoice_register supplementary dataset
+_INVOICE_RULES = frozenset({
+    "R08_FEE_INVOICE_MISSING",
+    "R09_FEE_EXCEEDS_INVOICE",
+    "R10_INVOICE_POSTDATES_PAYMENT",
+})
 
 def _actual_input_path(name: str, in_dir: Path) -> str:
     """Return the posix path of the file that load_file_mapped will use."""
@@ -41,6 +49,8 @@ _OUTPUT_FILES = [
     "exception_report.pdf",
     "audit.log",
     "evidence_pack.md",
+    "funds_trail.md",
+    "funds_trail.json",
     "frontend_payload.json",
     "data.ts",
     "run_log.json",
@@ -82,12 +92,22 @@ def run_pipeline(
 
     datasets = {name: load_file_mapped(name, in_dir, config.column_map) for name in _DATASET_NAMES}
 
+    # Supplementary datasets — loaded lazily only when needed
+    _invoice_register: list | None = None
+    _allocations: list | None = None
+
     violations: list = []
     rule_summary: list = []
 
     for rule_id in config.enabled_rules:
         meta = RULE_METADATA[rule_id]
         records = datasets[meta["dataset"]]
+
+        # Lazy-load supplementary datasets on first use
+        if rule_id in _INVOICE_RULES and _invoice_register is None:
+            _invoice_register = load_file_mapped("invoice_register", in_dir, config.column_map)
+        if rule_id == "R12_BULK_DEPOSIT_UNALLOCATED" and _allocations is None:
+            _allocations = load_file_mapped("allocations", in_dir, config.column_map)
 
         spec: dict = {"rule_id": rule_id}
         if rule_id == "R02_DORMANT_BALANCE":
@@ -98,8 +118,15 @@ def run_pipeline(
             spec["age_days"] = config.unreconciled_age_days
         elif rule_id == "R06_FIT_OVERHELD":
             spec["fit_days"] = config.fit_transfer_days
+        elif rule_id == "R12_BULK_DEPOSIT_UNALLOCATED":
+            spec["bulk_min_nzd"] = config.bulk_min_nzd
 
-        rule_fn = load_trust_rules_from_config([spec])[0]
+        rule_fn = load_trust_rules_from_config(
+            [spec],
+            invoice_register=_invoice_register,
+            allocations=_allocations,
+            client_ledger=datasets.get("client_ledger"),
+        )[0]
         results = [rule_fn(r) for r in records]
         rule_violations = [res for res in results if not res.passed]
         violations.extend(rule_violations)
@@ -139,10 +166,22 @@ def run_pipeline(
         output_dir=out_dir,
     )
 
+    trail_dict = write_funds_trail(
+        bank_statement=datasets["trust_bank_statement"],
+        allocations=_allocations or [],
+        client_ledger=datasets.get("client_ledger"),
+        invoice_register=_invoice_register,
+        firm_name=config.firm_name,
+        report_period=config.review_period,
+        generated_at=generated_at.date(),
+        output_path=out_dir / "funds_trail.md",
+    )
+
     adapt_full_report(
         report_dict=report_dict,
         pack_dict=pack_dict,
         output_dir=out_dir,
+        funds_trail_dict=trail_dict,
     )
 
     generate_data_ts(
@@ -151,7 +190,15 @@ def run_pipeline(
     )
 
     total_records = sum(len(ds) for ds in datasets.values())
-    input_files = [_actual_input_path(name, in_dir) for name in _DATASET_NAMES]
+    supplementary_names = []
+    if _invoice_register is not None:
+        supplementary_names.append("invoice_register")
+    if _allocations is not None:
+        supplementary_names.append("allocations")
+    input_files = [
+        _actual_input_path(name, in_dir)
+        for name in _DATASET_NAMES + supplementary_names
+    ]
 
     run_log_data = {
         "run_id":               f"RUN-{generated_at.strftime('%Y%m%d-%H%M%S')}",

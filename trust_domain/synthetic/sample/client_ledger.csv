@@ -37,3 +37,16 @@ L035,M019,2026-06-10,Payment - Final retained costs payment to vendor,0.00,5000.
 L036,M021,2026-06-01,FIT credit - Interest on pooled trust funds (May 2026),125.00,0.00,125.00,Y,2026-06-02,ERR-6: FIT balance not transferred within 14 days,
 L037,M012,2026-05-28,Disbursement - LINZ title search fee,0.00,200.00,54800.00,Y,2026-05-29,ERR-7: no INV-XXXXX reference for fee entry,
 L038,M013,2026-05-28,Fee - professional conveyancing services,0.00,500.00,109500.00,Y,2026-05-29,,INV-00234
+L039,M004,2026-06-10,Fee - legal services,0.00,350.00,29650.00,Y,2026-06-10,ERR-8: INV-99999 absent from invoice_register,INV-99999
+L040,M018,2026-06-01,Fee - professional legal services,0.00,5000.00,35000.00,Y,2026-06-01,"ERR-9: payment $5,000 exceeds INV-00236 amount $3,000",INV-00236
+L041,M015,2026-06-01,Disbursement - search fee,0.00,500.00,24500.00,Y,2026-06-01,ERR-10: INV-00237 issued 2026-06-15 postdates payment 2026-06-01,INV-00237
+L042,M004,2026-06-20,Receipt - client funds received (bulk deposit portion),3000.00,0.00,32650.00,Y,2026-06-20,,
+L043,M005,2026-06-20,Receipt - client funds received (bulk deposit portion),2500.00,0.00,7500.00,Y,2026-06-20,,
+L044,M007,2026-06-20,Receipt - client funds received (bulk deposit portion),2000.00,0.00,67000.00,Y,2026-06-20,,
+L045,M015,2026-06-22,Receipt - client funds received (bulk deposit portion),3000.00,0.00,27500.00,Y,2026-06-22,,
+L046,M018,2026-06-22,Receipt - client funds received (bulk deposit portion),2500.00,0.00,37500.00,Y,2026-06-22,,
+L047,M020,2026-06-24,Receipt - purchase deposit instalment (bulk deposit),2500.00,0.00,72500.00,Y,2026-06-24,,
+L048,M020,2026-06-24,Receipt - purchase deposit balance (1:1 bank deposit),3000.00,0.00,75500.00,Y,2026-06-24,,
+L049,M003,2026-06-24,Receipt - client funds received (bulk deposit portion),4000.00,0.00,89000.00,Y,2026-06-24,,
+L050,M008,2026-06-24,Receipt - client funds received (bulk deposit portion),5000.00,0.00,125000.00,Y,2026-06-24,,
+L051,M012,2026-06-24,Receipt - client funds received (bulk deposit portion),3000.00,0.00,57800.00,Y,2026-06-24,,

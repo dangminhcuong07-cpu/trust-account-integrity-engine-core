@@ -1,0 +1,4 @@
+invoice_id,matter_ref,amount_nzd,issue_date,description
+INV-00234,M013,500.00,2026-05-20,Professional conveyancing services
+INV-00236,M018,3000.00,2026-05-20,Professional legal services
+INV-00237,M015,1000.00,2026-06-15,Search fees and disbursements

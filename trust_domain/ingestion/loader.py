@@ -21,6 +21,8 @@ _FLOAT_FIELDS: dict[str, set[str]] = {
     "client_ledger": {"receipt_nzd", "payment_nzd", "balance_after_nzd"},
     "trust_bank_statement": {"credit_nzd", "debit_nzd", "running_balance_nzd"},
     "reconciliation_summary": {"ledger_total_nzd", "bank_balance_nzd", "difference_nzd"},
+    "invoice_register": {"amount_nzd"},
+    "allocations": {"amount_nzd"},
 }
 
 # The field that acts as Record.record_id per dataset.
@@ -29,6 +31,8 @@ _ID_FIELDS: dict[str, str] = {
     "client_ledger": "entry_id",
     "trust_bank_statement": "statement_id",
     "reconciliation_summary": "recon_id",
+    "invoice_register": "invoice_id",
+    "allocations": "bank_line_id",
 }
 
 

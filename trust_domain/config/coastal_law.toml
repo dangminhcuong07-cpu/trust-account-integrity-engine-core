@@ -16,6 +16,7 @@ dormancy_threshold_days = 365
 unreconciled_age_days = 30
 unmatched_bank_days = 5
 fit_transfer_days = 14
+bulk_min_nzd = 0.0
 
 [rules]
 enabled = [
@@ -26,6 +27,10 @@ enabled = [
   "R05_UNRECONCILED_AGEING",
   "R06_FIT_OVERHELD",
   "R07_FEE_WITHOUT_INVOICE",
+  "R08_FEE_INVOICE_MISSING",
+  "R09_FEE_EXCEEDS_INVOICE",
+  "R10_INVOICE_POSTDATES_PAYMENT",
+  "R12_BULK_DEPOSIT_UNALLOCATED",
 ]
 
 # [column_map] is optional. Omit it entirely if your export already uses the

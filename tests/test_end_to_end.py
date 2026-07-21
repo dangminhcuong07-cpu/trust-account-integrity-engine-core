@@ -27,6 +27,8 @@ _EXPECTED_OUTPUT_FILES = [
     "exception_report.md",
     "exception_report.pdf",
     "evidence_pack.md",
+    "funds_trail.md",
+    "funds_trail.json",
     "frontend_payload.json",
     "run_log.json",
     "data.ts",
@@ -63,11 +65,23 @@ def test_run_log_validation_passed(pipeline_result):
     assert run_log["validation_passed"] is True
 
 
-def test_exception_report_total_violations_is_7(pipeline_result):
+def test_exception_report_total_violations_is_15(pipeline_result):
+    # R01:  L021 (1)
+    # R02:  M017 (1)
+    # R03:  R002 (1)
+    # R04:  B031, B048 (2) — B048 is orphan credit, also caught by R12
+    # R05:  L009 (1)
+    # R06:  M021 (1)
+    # R07:  L037 (1)
+    # R08:  L039 (1)
+    # R09:  L040 (1)
+    # R10:  L041 (1)
+    # R12:  B031, B046, B047, B048 (4)
+    # Total = 15
     out = pipeline_result["output_dir"]
     report = json.loads((out / "exception_report.json").read_text(encoding="utf-8"))
-    assert report["total_violations"] == 7, (
-        f"Expected 7 violations, got {report['total_violations']}"
+    assert report["total_violations"] == 15, (
+        f"Expected 15 violations, got {report['total_violations']}"
     )
 
 

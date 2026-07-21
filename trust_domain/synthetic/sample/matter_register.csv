@@ -1,22 +1,22 @@
 matter_ref,client_name,client_bank_account,matter_type,matter_description,opened_date,closed_date,last_activity_date,current_balance_nzd,status
 M001,"Anderson, James & Susan",01-0100-0123456-00,PROPERTY_PURCHASE,"Purchase of 15 Pohutukawa Drive, Takapuna",2026-03-01,2026-04-15,2026-04-15,0.00,CLOSED
 M002,"Patel, Raj & Anita",12-3142-0567890-00,PROPERTY_PURCHASE,"Purchase of 7B Manukau Road, Epsom",2026-03-05,2026-04-28,2026-04-28,0.00,CLOSED
-M003,Estate of R.J. Williams (dec.),01-0168-0891234-00,ESTATE,Administration of estate - Williams,2026-02-14,,2026-04-05,85000.00,ACTIVE
-M004,"Chen, Wei & Mei",38-9003-0456789-00,PROPERTY_PURCHASE,"Purchase of 22 Rata Street, Mount Albert",2026-04-08,,2026-04-08,30000.00,ACTIVE
-M005,Tauranga Commercial Props Ltd,03-0743-0789012-00,COMMERCIAL,Commercial lease deposit - Bay Plaza,2026-03-20,,2026-05-02,5000.00,ACTIVE
+M003,Estate of R.J. Williams (dec.),01-0168-0891234-00,ESTATE,Administration of estate - Williams,2026-02-14,,2026-06-24,89000.00,ACTIVE
+M004,"Chen, Wei & Mei",38-9003-0456789-00,PROPERTY_PURCHASE,"Purchase of 22 Rata Street, Mount Albert",2026-04-08,,2026-06-20,32650.00,ACTIVE
+M005,Tauranga Commercial Props Ltd,03-0743-0789012-00,COMMERCIAL,Commercial lease deposit - Bay Plaza,2026-03-20,,2026-06-20,7500.00,ACTIVE
 M006,"Ngata, Hemi & Aroha",01-0104-0348592-02,PROPERTY_SALE,"Sale of 8 Kauri Crescent, Henderson",2026-03-10,2026-04-01,2026-04-01,7500.00,CLOSED
-M007,"Okonkwo, Chidi",06-0167-0901234-00,PROPERTY_PURCHASE,"Purchase of 3A Lake Road, Takapuna",2026-04-15,,2026-04-15,65000.00,ACTIVE
-M008,"Schmidt, Klaus & Ingrid",38-9011-0345678-00,PROPERTY_PURCHASE,"Purchase of 45 Remuera Road, Remuera",2026-03-28,,2026-03-28,120000.00,ACTIVE
+M007,"Okonkwo, Chidi",06-0167-0901234-00,PROPERTY_PURCHASE,"Purchase of 3A Lake Road, Takapuna",2026-04-15,,2026-06-20,67000.00,ACTIVE
+M008,"Schmidt, Klaus & Ingrid",38-9011-0345678-00,PROPERTY_PURCHASE,"Purchase of 45 Remuera Road, Remuera",2026-03-28,,2026-06-24,125000.00,ACTIVE
 M009,"Singh, Priya",02-0128-0678901-00,PROPERTY_SALE,"Sale of 12 Totara Avenue, New Lynn",2026-04-02,2026-05-12,2026-05-12,5000.00,CLOSED
 M010,Murphy Estate Trust,01-0748-0789012-00,ESTATE,Estate distribution - Murphy,2026-02-01,2026-04-20,2026-04-20,0.00,CLOSED
 M011,Te Arawa Holdings Ltd,03-1550-0234567-00,COMMERCIAL,Commercial settlement - Rotorua development,2026-05-01,,2026-05-14,2000.00,ACTIVE
-M012,"Blackwood, Thomas J.",12-3052-0890123-00,PROPERTY_PURCHASE,"Purchase of 6 Waimari Road, Westmere",2026-05-10,,2026-05-28,54800.00,ACTIVE
+M012,"Blackwood, Thomas J.",12-3052-0890123-00,PROPERTY_PURCHASE,"Purchase of 6 Waimari Road, Westmere",2026-05-10,,2026-06-24,57800.00,ACTIVE
 M013,"Liu, Jing & Yuan",02-0192-0456789-00,PROPERTY_PURCHASE,"Purchase of 19 Prosford Street, Ponsonby",2026-05-15,,2026-05-28,109500.00,ACTIVE
 M014,"Robertson, Sarah M.",01-0104-0567890-00,PROPERTY_SALE,"Sale of 27 Dominion Road, Mt Eden",2026-04-20,2026-06-05,2026-06-05,5000.00,CLOSED
-M015,"Garcia, Miguel A.",12-3164-0123456-00,PROPERTY_PURCHASE,"Purchase of 4 The Strand, Parnell",2026-05-20,,2026-05-20,25000.00,ACTIVE
+M015,"Garcia, Miguel A.",12-3164-0123456-00,PROPERTY_PURCHASE,"Purchase of 4 The Strand, Parnell",2026-05-20,,2026-06-22,27500.00,ACTIVE
 M016,"Fitzgerald, Declan & Erin",38-9008-0234567-00,PROPERTY_PURCHASE,"Purchase of 11 Devonport Road, Devonport [ERR-2: OVERDRAWN]",2026-03-15,,2026-04-28,-2500.00,ACTIVE
 M017,"Rowe, Margaret H. (Estate)",01-0748-0901234-00,ESTATE,Administration of estate - Rowe [ERR-3: DORMANT - no activity since 2024-12-15],2024-11-01,,2024-12-15,8500.00,DORMANT
-M018,"Kowalski, Adam & Ewa",02-0158-0678901-00,PROPERTY_PURCHASE,"Purchase of 33 Sandringham Road, Sandringham",2026-05-28,,2026-05-28,40000.00,ACTIVE
+M018,"Kowalski, Adam & Ewa",02-0158-0678901-00,PROPERTY_PURCHASE,"Purchase of 33 Sandringham Road, Sandringham",2026-05-28,,2026-06-22,37500.00,ACTIVE
 M019,"Nkosi, Thabo & Nomsa",03-0742-0345678-00,PROPERTY_SALE,"Sale of 9 Harbour View Road, Northcote",2026-04-25,2026-06-10,2026-06-10,0.00,CLOSED
-M020,"Yamamoto, Kenji",38-9015-0789012-00,PROPERTY_PURCHASE,"Purchase of 17 Gladstone Road, Parnell",2026-06-01,,2026-06-01,70000.00,ACTIVE
+M020,"Yamamoto, Kenji",38-9015-0789012-00,PROPERTY_PURCHASE,"Purchase of 17 Gladstone Road, Parnell",2026-06-01,,2026-06-24,75500.00,ACTIVE
 M021,Firm Interest in Trust (FIT account),01-0748-0234567-00,FIT,"FIT pooled trust interest account [ERR-6: OVERHELD - 24 days, deadline 14]",2026-06-01,,2026-06-01,125.00,ACTIVE
