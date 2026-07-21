@@ -12,8 +12,15 @@ A compliant billing record must exist before or on the date a fee is drawn
 from trust. Skip when no matching same-matter invoice is found in
 invoice_register (that absence is R08's domain).
 
-Citation status: PROVISIONAL - pending verification against legislation.govt.nz
-by the maintainer.
+Citation verified: 20 Jul 2026 against legislation.govt.nz
+(reprint as at 1 Jul 2022).
+
+Note: Reg 9(2) permits the invoice to be delivered 'before or immediately after'
+the debit, not strictly before. This rule's current threshold treats ANY
+issue_date after entry_date as a breach, which is stricter than the regulation's
+'immediately after' allowance. State the firm-configured grace period here if one
+is later added; until then this rule is a conservative same-day-or-earlier check,
+not a literal transcription of Reg 9(2).
 
 Regulation: LCA (Trust Account) Regulations 2008, Reg 9
 Severity:   HIGH

@@ -259,7 +259,7 @@ class TestR09FeeExceedsInvoice:
         rule = self._make_rule(invoices=[inv])
         r = rule(_ledger("L040", "M018", "2026-06-01", 5000,
                          description="Fee - legal services", reference="INV-00236"))
-        assert r.nzls_ref == "LCA (Trust Account) Regulations 2008, Reg 9"
+        assert r.nzls_ref == _r09.NZLS_REF
 
     def test_catches_err9_from_synthetic_data(self):
         invoices = _load("invoice_register")

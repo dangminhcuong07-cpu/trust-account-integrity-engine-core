@@ -11,8 +11,14 @@ Flag any client ledger entry where:
 This rule does NOT check reference format (that is R07's domain). Any entry
 where the reference is empty or does not match INV-format is skipped here.
 
-Citation status: PROVISIONAL - pending verification against legislation.govt.nz
-by the maintainer.
+Citation verified: 20 Jul 2026 against legislation.govt.nz
+(reprint as at 1 Jul 2022).
+
+Scope note: this rule checks only the invoice path of Reg 9(1)(a). Reg 9(1)(b)
+permits an alternative basis — a signed, dated client authority — which this rule
+cannot currently detect because the ledger schema has no field for it. A debit
+properly authorised under 9(1)(b) with no invoice will be a false positive under
+this rule until that field is added.
 
 Regulation: LCA (Trust Account) Regulations 2008, Reg 9
 Severity:   HIGH

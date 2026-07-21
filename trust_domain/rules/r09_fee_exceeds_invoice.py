@@ -12,11 +12,16 @@ Scope: per-entry check only. Does not aggregate multiple payments against one
 invoice. Skip when no matching same-matter invoice is found in invoice_register
 (that absence is R08's domain).
 
-Citation status: PROVISIONAL - pending verification against legislation.govt.nz
-by the maintainer.
+Reg 9 requires a dated invoice or signed client authority before a trust account
+may be debited with fees, but it does not impose any numeric limit tying the
+debited amount to the invoice amount. This rule is a firm-policy internal
+control, not an enforcement of a statutory cap — it flags a payment that exceeds
+its own supporting invoice as a control weakness worth investigating, not
+necessarily a regulatory breach in itself.
 
-Regulation: LCA (Trust Account) Regulations 2008, Reg 9
-Severity:   HIGH
+Classification: Internal control check (no direct statutory basis) — Reg 9
+                governs invoice existence and timing, not amount matching
+Severity:       HIGH
 """
 
 from __future__ import annotations
@@ -26,7 +31,7 @@ from integrity_engine.core.types import Record
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID  = "R09_FEE_EXCEEDS_INVOICE"
-NZLS_REF = "LCA (Trust Account) Regulations 2008, Reg 9"
+NZLS_REF = "Internal control check (no direct statutory basis) — Reg 9 governs invoice existence and timing, not amount matching"
 SEVERITY = "HIGH"
 
 _INVOICE_RE = re.compile(r"^INV-\d{5}$")

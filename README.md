@@ -33,9 +33,9 @@ Citation strings used verbatim throughout the codebase:
 | R05 | `LCA (Trust Account) Regulations 2008, Reg 11 / Reg 17` | Verified |
 | R06 | `LCA 2006, s110; LCA (Trust Account) Regulations 2008, Reg 8/Reg 9` | Verified |
 | R07 | `LCA (Trust Account) Regulations 2008, Reg 9` | Verified |
-| R08 | `LCA (Trust Account) Regulations 2008, Reg 9` | PROVISIONAL |
-| R09 | `LCA (Trust Account) Regulations 2008, Reg 9` | PROVISIONAL |
-| R10 | `LCA (Trust Account) Regulations 2008, Reg 9` | PROVISIONAL |
+| R08 | `LCA (Trust Account) Regulations 2008, Reg 9` | Verified 20 Jul 2026 |
+| R09 | `Internal control check (no direct statutory basis) — Reg 9 governs invoice existence and timing, not amount matching` | Reclassified (internal control, not statutory) |
+| R10 | `LCA (Trust Account) Regulations 2008, Reg 9` | Verified 20 Jul 2026 |
 | R12 | `LCA (Trust Account) Regulations 2008, Reg 11 / Reg 12(1)` | PROVISIONAL |
 
 Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 444 tests, 0 skipped.
@@ -55,9 +55,9 @@ Each rule maps to a numbered regulation or identified guidance. Where the regula
 | R05 | Unreconciled ageing         | HIGH     | Verified |
 | R06 | FIT overheld                | HIGH     | Verified |
 | R07 | Fee without invoice         | HIGH     | Verified |
-| R08 | Fee invoice missing         | HIGH     | PROVISIONAL |
-| R09 | Fee exceeds invoice         | HIGH     | PROVISIONAL |
-| R10 | Invoice postdates payment   | HIGH     | PROVISIONAL |
+| R08 | Fee invoice missing         | HIGH     | Verified 20 Jul 2026 |
+| R09 | Fee exceeds invoice         | HIGH     | Internal control (no statutory cap) |
+| R10 | Invoice postdates payment   | HIGH     | Verified 20 Jul 2026 |
 | R12 | Bulk deposit unallocated    | CRITICAL | PROVISIONAL |
 
 ---
