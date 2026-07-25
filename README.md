@@ -36,7 +36,7 @@ Citation strings used verbatim throughout the codebase:
 | R08 | `LCA (Trust Account) Regulations 2008, Reg 9` | Verified 20 Jul 2026 |
 | R09 | `Internal control check (no direct statutory basis) — Reg 9 governs invoice existence and timing, not amount matching` | Reclassified (internal control, not statutory) |
 | R10 | `LCA (Trust Account) Regulations 2008, Reg 9` | Verified 20 Jul 2026 |
-| R12 | `LCA (Trust Account) Regulations 2008, Reg 11 / Reg 12(1)` | PROVISIONAL |
+| R12 | `LCA (Trust Account) Regulations 2008, Reg 12(1)(b) (client fund segregation) and Reg 11 (traceability)` | Verified 20 Jul 2026 |
 
 Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 444 tests, 0 skipped.
 
@@ -58,7 +58,7 @@ Each rule maps to a numbered regulation or identified guidance. Where the regula
 | R08 | Fee invoice missing         | HIGH     | Verified 20 Jul 2026 |
 | R09 | Fee exceeds invoice         | HIGH     | Internal control (no statutory cap) |
 | R10 | Invoice postdates payment   | HIGH     | Verified 20 Jul 2026 |
-| R12 | Bulk deposit unallocated    | CRITICAL | PROVISIONAL |
+| R12 | Bulk deposit unallocated    | CRITICAL | Verified 20 Jul 2026 |
 
 ---
 

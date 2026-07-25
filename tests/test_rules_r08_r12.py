@@ -443,7 +443,7 @@ class TestR12BulkDepositUnallocated:
         rule = self._make_rule()
         r = rule(_bank("B031", credit=15000, matched=""))
         assert r.severity == "CRITICAL"
-        assert r.nzls_ref == "LCA (Trust Account) Regulations 2008, Reg 11 / Reg 12(1)"
+        assert r.nzls_ref == _r12.NZLS_REF
 
     def test_catches_err12a_b046_from_synthetic_data(self):
         allocs = _load("allocations")

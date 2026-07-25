@@ -15,10 +15,16 @@ Pass conditions:
   - Fully allocated: allocation amounts sum to credit_nzd AND all
     ledger_entry_ids in allocations exist in client_ledger (when provided).
 
-Citation status: PROVISIONAL - pending verification against legislation.govt.nz
-by the maintainer.
+Citation verified: 20 Jul 2026 against legislation.govt.nz
+(reprint as at 1 Jul 2022).
 
-Regulation: LCA (Trust Account) Regulations 2008, Reg 11 / Reg 12(1)
+An unallocated or partially-allocated bulk deposit represents client money not
+yet segregated into a single client's ledger account, breaching Reg 12(1)(b);
+Reg 11 requires the segregation to be evidenced by referenced entries traceable
+back to source, which is what the allocations.csv join provides.
+
+Regulation: LCA (Trust Account) Regulations 2008, Reg 12(1)(b) (client fund
+            segregation) and Reg 11 (traceability)
 Severity:   CRITICAL
 """
 
@@ -28,7 +34,7 @@ from integrity_engine.core.types import Record
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID  = "R12_BULK_DEPOSIT_UNALLOCATED"
-NZLS_REF = "LCA (Trust Account) Regulations 2008, Reg 11 / Reg 12(1)"
+NZLS_REF = "LCA (Trust Account) Regulations 2008, Reg 12(1)(b) (client fund segregation) and Reg 11 (traceability)"
 SEVERITY = "CRITICAL"
 
 
