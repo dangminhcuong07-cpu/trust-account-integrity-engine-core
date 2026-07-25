@@ -1,4 +1,4 @@
 recon_id,period_end_date,ledger_total_nzd,bank_balance_nzd,difference_nzd,prepared_by,approved_by,status,notes
 R001,2026-03-31,1508500.00,1508500.00,0.00,J. Anderson,S. Mitchell,AGREED,
 R002,2026-04-30,798500.00,798750.00,-250.00,J. Anderson,S. Mitchell,DISCREPANCY,ERR-4: $250 difference - trust account interest (B022) not allocated to any client matter ledger
-R003,2026-05-31,,,,J. Anderson,,IN PROGRESS,"ERR-5 (B031 $15,000 orphan credit) and ERR-1 (L009 unreconciled 65+ days) both present in this period"
+R003,2026-05-31,,,,J. Anderson,,IN PROGRESS,"ERR-5 (B031 $15,000 orphan credit) and ERR-1 (L009 unreconciled) both present in this period"
