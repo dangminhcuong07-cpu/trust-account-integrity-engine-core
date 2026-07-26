@@ -352,7 +352,7 @@ BANK_ROWS = [
     # negative. matched_ledger_entry set to a non-ledger sentinel (not a real client
     # ledger entry — this is a bank-side anomaly) so R04 does not also flag it.
     # 685825.00 - 700000.00 = -14175.00
-    ("B050", _TA, "2026-06-25", "Debit - Unauthorised bank-side debit (processing error)", "0.00", "700000.00", "-14175.00", "BANK-ERROR", "ERR-13: running_balance_nzd negative - trust bank account overdrawn (Reg 6 breach, PROVISIONAL)"),
+    ("B050", _TA, "2026-06-25", "Debit - Unauthorised bank-side debit (processing error)", "0.00", "700000.00", "-14175.00", "BANK-ERROR", "ERR-13: running_balance_nzd negative - trust bank account overdrawn (Reg 6 breach)"),
     # Clean complement to ERR-13: correcting credit restores the balance to positive.
     # matched_ledger_entry set to a distinct sentinel so R04/R12 do not flag it either.
     # -14175.00 + 20000.00 = 5825.00
@@ -464,7 +464,7 @@ Seeded errors (12 rule types, 14 seeded records):
   ERR-12a Under-allocated bulk deposit    bank B046 / $9,000 / allocations sum $7,500
   ERR-12b Over-allocated bulk deposit     bank B047 / $5,000 / allocations sum $5,500
   ERR-12c Bulk deposit no allocations     bank B048 / $15,000 / zero allocation rows
-  ERR-13  Bank account overdrawn          bank B050 / running balance -$14,175.00 (PROVISIONAL citation)
+  ERR-13  Bank account overdrawn          bank B050 / running balance -$14,175.00
 """)
 
 

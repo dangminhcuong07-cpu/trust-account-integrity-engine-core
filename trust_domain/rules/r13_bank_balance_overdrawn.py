@@ -15,17 +15,15 @@ balance_after_nzd.
 Regulation: LCA (Trust Account) Regulations 2008, Reg 6
 Severity:   CRITICAL
 
-Citation status: PROVISIONAL — not yet verified against
-legislation.govt.nz. Do not treat as confirmed until independently
-checked against the current reprint (see R01/R03's docstrings for the
-verification format this should follow once checked).
+Citation verified: 26 Jul 2026 against legislation.govt.nz
+(reprint as at 1 Jul 2022).
 """
 
 from integrity_engine.core.types import Record
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID  = "R13_BANK_BALANCE_OVERDRAWN"
-NZLS_REF = "LCA (Trust Account) Regulations 2008, Reg 6 [PROVISIONAL - not yet verified against legislation.govt.nz]"
+NZLS_REF = "LCA (Trust Account) Regulations 2008, Reg 6"
 SEVERITY = "CRITICAL"
 
 

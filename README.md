@@ -37,8 +37,9 @@ Citation strings used verbatim throughout the codebase:
 | R09 | `Internal control check (no direct statutory basis) — Reg 9 governs invoice existence and timing, not amount matching` | Reclassified (internal control, not statutory) |
 | R10 | `LCA (Trust Account) Regulations 2008, Reg 9` | Verified 20 Jul 2026 |
 | R12 | `LCA (Trust Account) Regulations 2008, Reg 12(1)(b) (client fund segregation) and Reg 11 (traceability)` | Verified 20 Jul 2026 |
+| R13 | `LCA (Trust Account) Regulations 2008, Reg 6` | Verified 26 Jul 2026 |
 
-Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 444 tests, 0 skipped.
+Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 455 tests, 0 skipped.
 
 ---
 
