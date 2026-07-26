@@ -1,0 +1,8 @@
+# Trust Account Integrity Engine — runtime dependencies.
+# Loose minimum pins only, so this installs cleanly across supported
+# Python versions. Mirrors the install list in setup.py.
+
+reportlab>=4.0
+openpyxl>=3.1
+pytest>=8.0
+tomli>=2.0; python_version < "3.11"

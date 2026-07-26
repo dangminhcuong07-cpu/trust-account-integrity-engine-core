@@ -30,15 +30,21 @@ pip install -r requirements.txt
 ## 3. Generate the synthetic demo dataset
 
 ```bash
-python trust_domain/synthetic/generator.py
+python trust_domain/synthetic/generator.py --output-dir data/sample
 ```
 
-Writes six CSVs to `trust_domain/synthetic/sample/`:
+`--output-dir data/sample` is required — it's the directory `run.py` reads
+from in Step 4. The generator's own default output location,
+`trust_domain/synthetic/sample/`, is a different directory and will not
+be found by the engine.
+
+Writes six CSVs to `data/sample/`:
 `matter_register`, `client_ledger`, `trust_bank_statement`,
 `reconciliation_summary`, `invoice_register`, `allocations`.
 
-The dataset contains **thirteen seeded breaches** (one per rule variant)
-and clean complements for every rule.
+The dataset contains **13 seeded error scenarios across the 11 supported
+rules** (R12 has three variants: under-allocated, over-allocated, and
+zero-allocation bulk deposits) and clean complements for every rule.
 
 ---
 
@@ -66,7 +72,7 @@ All outputs land in `output/coastal_law/`:
 ## 5. Expected result
 
 ```
-Run complete - 15 violations found (2 CRITICAL, 13 HIGH)
+Run complete - 15 violations found (6 CRITICAL, 9 HIGH)
 Output written to: output/coastal_law
 Exception report: output/coastal_law/exception_report.pdf
 Evidence pack:    output/coastal_law/evidence_pack.md
@@ -83,7 +89,7 @@ The 15 violations are deterministic — same ledger always produces the same rep
 pytest
 ```
 
-Expected: **444 passed, 0 skipped**.
+Expected: **444 passed, 0 failed, 0 skipped**.
 
 ---
 
@@ -99,10 +105,17 @@ See `docs/DATA_HANDLING_BOUNDARY.md` for the data-handling and confidentiality b
 
 ## 8. View in the browser (optional)
 
+The frontend is a separate repository — it is not part of this clone and is
+not a subfolder of this project:
+
 ```bash
+git clone https://github.com/dangminhcuong07-cpu/trust-account-integrity-engine.git
 cd trust-account-integrity-engine
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173. The frontend reads `frontend_payload.json` from the engine output.
+Open http://localhost:3000. The frontend does not read `frontend_payload.json`
+directly — copy `output/coastal_law/data.ts` (written in Step 4) over
+`trust-account-integrity-engine/src/data.ts` before running `npm run dev` (or
+`npm run build`) to see the current run's results rendered.

@@ -95,6 +95,8 @@ def test_no_files_written_to_data_sample(pipeline_result):
         "client_ledger.csv",
         "trust_bank_statement.csv",
         "reconciliation_summary.csv",
+        "invoice_register.csv",
+        "allocations.csv",
     }
     assert actual_names == expected_names, (
         f"Unexpected files appeared in data/sample/: "
