@@ -18,6 +18,7 @@ targeted changes required to exercise all trust-domain rules:
   ERR-12a R12_BULK_DEPOSIT_UNALLOCATED  — B046, allocations sum $7,500 < credit $9,000
   ERR-12b R12_BULK_DEPOSIT_UNALLOCATED  — B047, allocations sum $5,500 > credit $5,000
   ERR-12c R12_BULK_DEPOSIT_UNALLOCATED  — B048, credit $15,000 with zero allocations
+  ERR-13 R13_BANK_BALANCE_OVERDRAWN     — B050, running_balance_nzd=-14175.00
 
 Key differences from data/generate_sample.py (DO NOT MODIFY THAT FILE):
   - LEDGER_HEADERS gains a "reference" column (all existing rows get "")
@@ -34,6 +35,8 @@ Key differences from data/generate_sample.py (DO NOT MODIFY THAT FILE):
   - B038-B040 added (bank counterparts to L036-L038)
   - L039-L051 added (ERR-8/9/10 seeds + R12 allocation receipts + B049 true-negative)
   - B041-B049 added (bank counterparts + R12 bulk deposit seeds + clean true-negative)
+  - B050-B051 added (ERR-13 seed: running_balance_nzd goes negative; B051 is the
+    clean complement — a correcting credit that restores a positive balance)
   - invoice_register.csv added (3 rows; INV-99999 deliberately absent for ERR-8)
   - allocations.csv added (9 rows; B046 under, B047 over, B048 absent, B049 exact-match)
   - Matter balances updated: M003→89000, M004→32650, M005→7500, M007→67000,
@@ -345,6 +348,15 @@ BANK_ROWS = [
     # B049: clean true-negative for R12 — $12,000 bulk deposit fully allocated to L049/L050/L051
     # allocations sum exactly equals credit: 4000 + 5000 + 3000 = 12000 (R12 PROVEN)
     ("B049", _TA, "2026-06-24", "Credit - Multi-client bulk deposit (M003/M008/M012)", "12000.00", "0.00", "685825.00", "BULK-ALLOCATED", "R12 true-negative: fully allocated to L049/L050/L051"),
+    # ERR-13: bank-side error debit exceeds the account balance — running balance goes
+    # negative. matched_ledger_entry set to a non-ledger sentinel (not a real client
+    # ledger entry — this is a bank-side anomaly) so R04 does not also flag it.
+    # 685825.00 - 700000.00 = -14175.00
+    ("B050", _TA, "2026-06-25", "Debit - Unauthorised bank-side debit (processing error)", "0.00", "700000.00", "-14175.00", "BANK-ERROR", "ERR-13: running_balance_nzd negative - trust bank account overdrawn (Reg 6 breach, PROVISIONAL)"),
+    # Clean complement to ERR-13: correcting credit restores the balance to positive.
+    # matched_ledger_entry set to a distinct sentinel so R04/R12 do not flag it either.
+    # -14175.00 + 20000.00 = 5825.00
+    ("B051", _TA, "2026-06-26", "Credit - Bank error reversal (correcting entry)", "20000.00", "0.00", "5825.00", "BANK-CORRECTION", "Clean: running balance restored positive - should NOT be flagged by R13"),
 ]
 
 
@@ -438,7 +450,7 @@ def generate(output_dir: Path) -> None:
         print(f"  {name}.csv  -  {n} rows")
 
     print("""
-Seeded errors (11 total):
+Seeded errors (12 rule types, 14 seeded records):
   ERR-1   Unreconciled entry > 30 days    ledger L009 / matter M008 / 89 days old
   ERR-2   Overdrawn client matter         ledger L021 / matter M016 / balance -$2,500
   ERR-3   Dormant matter with balance     matter M017 / balance $8,500 / last activity 2024-12-15
@@ -452,6 +464,7 @@ Seeded errors (11 total):
   ERR-12a Under-allocated bulk deposit    bank B046 / $9,000 / allocations sum $7,500
   ERR-12b Over-allocated bulk deposit     bank B047 / $5,000 / allocations sum $5,500
   ERR-12c Bulk deposit no allocations     bank B048 / $15,000 / zero allocation rows
+  ERR-13  Bank account overdrawn          bank B050 / running balance -$14,175.00 (PROVISIONAL citation)
 """)
 
 

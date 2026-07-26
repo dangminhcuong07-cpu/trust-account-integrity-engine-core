@@ -2,7 +2,8 @@
 Tests for trust_domain/synthetic/generator.py.
 
 The generator has one public function: generate(output_dir: Path) -> None.
-It always writes the same hardcoded dataset (all 7 seeded errors).
+It always writes the same hardcoded dataset (14 seeded error records across
+12 rule types: R01-R10, R12, R13).
 There is no seed_errors parameter and no ground_truth.json output.
 Tests verify: file creation, row counts, seeded-error records present,
 and false-positive prevention (key differences from data/sample/).
@@ -80,7 +81,7 @@ class TestRowCounts:
 
     def test_trust_bank_statement_row_count(self, generated):
         rows = _read_csv(generated / "trust_bank_statement.csv")
-        assert len(rows) == 49, f"Expected 49 bank lines, got {len(rows)}"
+        assert len(rows) == 51, f"Expected 51 bank lines, got {len(rows)}"
 
     def test_reconciliation_summary_row_count(self, generated):
         rows = _read_csv(generated / "reconciliation_summary.csv")
@@ -366,3 +367,25 @@ class TestNewSeededErrorRecordsPresent:
             assert ref in ledger_ids, (
                 f"B049 allocation ledger_entry_id {ref!r} not found in client_ledger.csv"
             )
+
+
+# ---------------------------------------------------------------------------
+# Group 6 — ERR-13 seeded error record present (bank balance overdrawn)
+# ---------------------------------------------------------------------------
+
+class TestErr13SeededRecords:
+    def test_err13_b050_negative_running_balance(self, generated):
+        bank_rows = _read_csv(generated / "trust_bank_statement.csv")
+        line = next((r for r in bank_rows if r["statement_id"] == "B050"), None)
+        assert line is not None, "B050 not found in trust_bank_statement.csv"
+        assert float(line["running_balance_nzd"]) < 0, (
+            "B050 must have negative running_balance_nzd (ERR-13)"
+        )
+
+    def test_b051_clean_positive_running_balance(self, generated):
+        bank_rows = _read_csv(generated / "trust_bank_statement.csv")
+        line = next((r for r in bank_rows if r["statement_id"] == "B051"), None)
+        assert line is not None, "B051 not found in trust_bank_statement.csv"
+        assert float(line["running_balance_nzd"]) > 0, (
+            "B051 (clean complement) must have positive running_balance_nzd"
+        )

@@ -119,6 +119,7 @@ pytest
 - Practice-management-system export adapters (LEAP, Actionstep)
 - Reg 17 monthly certification support report
 - Additional rules: client statement intervals, FIT ledger overdraw, unclaimed money escalation
+- R14_FIT_BALANCE_INDICATOR (proposed) - practitioner-informed staff/processing-performance heuristic for FIT ledger balances; requires a new severity tier below HIGH (e.g. INFO) to avoid misrepresenting it alongside genuine compliance breaches; not yet built.
 
 ---
 

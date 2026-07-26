@@ -48,3 +48,5 @@ B046,01-0748-0234567-00,2026-06-24,Credit - Multi-client bulk deposit (M004/M005
 B047,01-0748-0234567-00,2026-06-24,Credit - Multi-client bulk deposit (M015/M018),5000.00,0.00,658825.00,BULK-MULTI,"ERR-12b: allocations sum $5,500 > credit $5,000"
 B048,01-0748-0234567-00,2026-06-24,Credit - Unallocated bulk deposit (source: M006 conveyancing),15000.00,0.00,673825.00,,"ERR-12c: $15,000 bulk credit with no allocation rows"
 B049,01-0748-0234567-00,2026-06-24,Credit - Multi-client bulk deposit (M003/M008/M012),12000.00,0.00,685825.00,BULK-ALLOCATED,R12 true-negative: fully allocated to L049/L050/L051
+B050,01-0748-0234567-00,2026-06-25,Debit - Unauthorised bank-side debit (processing error),0.00,700000.00,-14175.00,BANK-ERROR,"ERR-13: running_balance_nzd negative - trust bank account overdrawn (Reg 6 breach, PROVISIONAL)"
+B051,01-0748-0234567-00,2026-06-26,Credit - Bank error reversal (correcting entry),20000.00,0.00,5825.00,BANK-CORRECTION,Clean: running balance restored positive - should NOT be flagged by R13

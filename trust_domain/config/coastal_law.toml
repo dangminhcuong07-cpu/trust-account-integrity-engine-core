@@ -31,6 +31,7 @@ enabled = [
   "R09_FEE_EXCEEDS_INVOICE",
   "R10_INVOICE_POSTDATES_PAYMENT",
   "R12_BULK_DEPOSIT_UNALLOCATED",
+  "R13_BANK_BALANCE_OVERDRAWN",
 ]
 
 # [column_map] is optional. Omit it entirely if your export already uses the

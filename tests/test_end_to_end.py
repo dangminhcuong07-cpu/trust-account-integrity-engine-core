@@ -65,7 +65,7 @@ def test_run_log_validation_passed(pipeline_result):
     assert run_log["validation_passed"] is True
 
 
-def test_exception_report_total_violations_is_15(pipeline_result):
+def test_exception_report_total_violations_is_16(pipeline_result):
     # R01:  L021 (1)
     # R02:  M017 (1)
     # R03:  R002 (1)
@@ -77,11 +77,12 @@ def test_exception_report_total_violations_is_15(pipeline_result):
     # R09:  L040 (1)
     # R10:  L041 (1)
     # R12:  B031, B046, B047, B048 (4)
-    # Total = 15
+    # R13:  B050 (1)
+    # Total = 16
     out = pipeline_result["output_dir"]
     report = json.loads((out / "exception_report.json").read_text(encoding="utf-8"))
-    assert report["total_violations"] == 15, (
-        f"Expected 15 violations, got {report['total_violations']}"
+    assert report["total_violations"] == 16, (
+        f"Expected 16 violations, got {report['total_violations']}"
     )
 
 

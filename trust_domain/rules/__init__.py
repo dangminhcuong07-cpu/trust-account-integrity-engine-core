@@ -24,6 +24,7 @@ import trust_domain.rules.r08_fee_invoice_missing as _r08
 import trust_domain.rules.r09_fee_exceeds_invoice as _r09
 import trust_domain.rules.r10_invoice_postdates_payment as _r10
 import trust_domain.rules.r12_bulk_deposit_unallocated as _r12
+import trust_domain.rules.r13_bank_balance_overdrawn as _r13
 
 __all__ = ["TrustRuleResult", "RULE_METADATA", "load_trust_rules_from_config"]
 
@@ -118,6 +119,14 @@ RULE_METADATA: dict[str, dict] = {
         "dataset":   "trust_bank_statement",
         "mode":      "evaluate_all",
     },
+    "R13_BANK_BALANCE_OVERDRAWN": {
+        "rule_id":   "R13_BANK_BALANCE_OVERDRAWN",
+        "label":     "Trust bank account running balance goes negative",
+        "nzls_ref":  _r13.NZLS_REF,
+        "severity":  _r13.SEVERITY,
+        "dataset":   "trust_bank_statement",
+        "mode":      "evaluate_all",
+    },
 }
 
 # Default callable registry (parameterizable rules use date.today() defaults).
@@ -136,6 +145,7 @@ _TRUST_RULE_REGISTRY: dict[str, RuleProtocol] = {
     "R09_FEE_EXCEEDS_INVOICE":     _r09.make_fee_exceeds_invoice_rule([]),
     "R10_INVOICE_POSTDATES_PAYMENT": _r10.make_invoice_postdates_rule([]),
     "R12_BULK_DEPOSIT_UNALLOCATED":  _r12.make_bulk_deposit_rule([]),
+    "R13_BANK_BALANCE_OVERDRAWN":    _r13.bank_balance_overdrawn,
 }
 
 

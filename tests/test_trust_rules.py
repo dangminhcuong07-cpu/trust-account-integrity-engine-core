@@ -1,5 +1,7 @@
 """
-TDD tests for the seven NZ trust-accounting domain rules (Step 2.2).
+TDD tests for the NZ trust-accounting domain rules that need no
+supplementary dataset or factory parameters (Step 2.2, plus R13 added
+later in the same style).
 
 Reference date used throughout: 2026-06-25 (matches synthetic data scenario).
 
@@ -11,6 +13,7 @@ Seeded errors:
   ERR-5  B031  matched_ledger_entry="" (34 days old)             → R04_UNMATCHED_BANK_LINE
   ERR-6  M021  FIT balance 24 days old (threshold=14)           → R06_FIT_OVERHELD
   ERR-7  L037  disbursement payment, reference="" (no INV-#)     → R07_FEE_WITHOUT_INVOICE
+  ERR-13 B050  running_balance_nzd=-14175.00                     → R13_BANK_BALANCE_OVERDRAWN
 """
 
 from __future__ import annotations
@@ -28,6 +31,7 @@ import trust_domain.rules.r04_unmatched_bank_line as _r04
 import trust_domain.rules.r05_unreconciled_ageing as _r05
 import trust_domain.rules.r06_fit_overheld as _r06
 import trust_domain.rules.r07_fee_without_invoice as _r07
+import trust_domain.rules.r13_bank_balance_overdrawn as _r13
 from trust_domain.rules import TrustRuleResult
 
 REF_DATE  = datetime.date(2026, 6, 25)
@@ -95,7 +99,8 @@ def _recon_record(recon_id, status, ledger_total, bank_balance, difference, peri
     )
 
 
-def _bank_record(statement_id, transaction_date, credit, debit, matched):
+def _bank_record(statement_id, transaction_date, credit, debit, matched,
+                  running_balance_nzd=0.0):
     return Record(
         record_id=statement_id,
         data={
@@ -105,6 +110,7 @@ def _bank_record(statement_id, transaction_date, credit, debit, matched):
             "debit_nzd":            debit,
             "matched_ledger_entry": matched,
             "description":          "test",
+            "running_balance_nzd":  float(running_balance_nzd),
         },
     )
 
@@ -482,6 +488,68 @@ class TestR07FeeWithoutInvoice:
     def test_only_one_violation_in_synthetic_data(self):
         records = _load("client_ledger")
         failures = [res for res in [_r07.fee_without_invoice(r) for r in records]
+                    if not res.passed]
+        assert len(failures) == 1, f"Expected 1 violation, got: {[f.record_id for f in failures]}"
+
+
+# ── R13: Bank balance overdrawn ────────────────────────────────────────────────
+
+class TestR13BankBalanceOverdrawn:
+
+    def test_positive_balance_passes(self):
+        r = _r13.bank_balance_overdrawn(
+            _bank_record("B004", "2026-03-01", 80000, 0, "L004", running_balance_nzd=553500.00)
+        )
+        assert r.passed
+        assert r.rule_id == "R13_BANK_BALANCE_OVERDRAWN"
+
+    def test_zero_balance_passes(self):
+        r = _r13.bank_balance_overdrawn(
+            _bank_record("B014", "2026-04-15", 0, 725000, "L014", running_balance_nzd=0.00)
+        )
+        assert r.passed
+
+    def test_negative_balance_fails(self):
+        r = _r13.bank_balance_overdrawn(
+            _bank_record("B050", "2026-06-25", 0, 700000, "BANK-ERROR", running_balance_nzd=-14175.00)
+        )
+        assert not r.passed
+        assert r.record_id == "B050"
+
+    def test_evidence_contains_balance(self):
+        r = _r13.bank_balance_overdrawn(
+            _bank_record("B050", "2026-06-25", 0, 700000, "BANK-ERROR", running_balance_nzd=-14175.00)
+        )
+        assert "-$14,175.00" in r.evidence
+
+    def test_nzls_ref_present(self):
+        r = _r13.bank_balance_overdrawn(
+            _bank_record("B050", "2026-06-25", 0, 700000, "BANK-ERROR", running_balance_nzd=-14175.00)
+        )
+        assert r.nzls_ref != ""
+
+    def test_severity_present(self):
+        r = _r13.bank_balance_overdrawn(
+            _bank_record("B050", "2026-06-25", 0, 700000, "BANK-ERROR", running_balance_nzd=-14175.00)
+        )
+        assert r.severity != ""
+
+    def test_catches_err13_from_synthetic_data(self):
+        records = _load("trust_bank_statement")
+        results = [_r13.bank_balance_overdrawn(r) for r in records]
+        failures = [res for res in results if not res.passed]
+        assert any(res.record_id == "B050" for res in failures), \
+            "ERR-13 (B050) not caught by R13_BANK_BALANCE_OVERDRAWN"
+
+    def test_b051_clean_complement_passes(self):
+        records = _load("trust_bank_statement")
+        b051 = next(r for r in records if r.record_id == "B051")
+        assert _r13.bank_balance_overdrawn(b051).passed, \
+            "B051 (balance restored positive) should pass R13"
+
+    def test_only_one_violation_in_synthetic_data(self):
+        records = _load("trust_bank_statement")
+        failures = [res for res in [_r13.bank_balance_overdrawn(r) for r in records]
                     if not res.passed]
         assert len(failures) == 1, f"Expected 1 violation, got: {[f.record_id for f in failures]}"
 
