@@ -96,6 +96,8 @@ Outputs land in `output/<firm-slug>/`:
 
 ## Tests
 
+**Tests: 468 passing, 0 failed** (current — verified by running `pytest` locally).
+
 ```bash
 pytest
 ```

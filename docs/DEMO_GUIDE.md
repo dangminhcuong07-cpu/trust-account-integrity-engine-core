@@ -7,13 +7,15 @@ Run it before using the engine on real client data.
 
 ## 1. Why the Demo Exists
 
-The engine ships with synthetic NZ trust ledger data containing 7 deliberately
-seeded errors — one per rule class. This lets you verify the engine catches known
+The engine ships with synthetic NZ trust ledger data containing deliberately
+seeded errors covering every rule class in the R01-R07 subset exercised by
+`tests/test_trust_rules.py` (9 violations total — R01 alone now catches 3:
+ERR-2, ERR-14a, and ERR-15). This lets you verify the engine catches known
 breaches before running it against real client data.
 
 The synthetic dataset (`trust_domain/synthetic/sample/`) was built to match the
 structure of a real NZ law firm trust account, with realistic matter references,
-ledger entries, bank statement lines, and reconciliation records. The 7 seeded
+ledger entries, bank statement lines, and reconciliation records. The seeded
 errors cover every violation category the engine detects.
 
 ---
@@ -22,7 +24,7 @@ errors cover every violation category the engine detects.
 
 **Option A — Full pipeline run (produces all output files):**
 
-The test suite uses the synthetic sample data and asserts all 7 violations are found:
+The test suite uses the synthetic sample data and asserts all 9 violations are found:
 
 ```
 python -m pytest tests/test_end_to_end.py -v
@@ -38,20 +40,25 @@ python -m pytest tests/test_trust_rules.py -v
 ```
 
 This runs each rule individually against the synthetic data and confirms:
-- exactly 7 violations are detected (one per seeded error)
+- exactly 9 violations are detected (one per seeded error, except R01 which
+  catches 3: ERR-2, ERR-14a, ERR-15)
 - no false positives on clean records
 
 **Note on `python run.py --config trust_domain/config/coastal_law.toml`:**
 
 Running the CLI directly against `coastal_law.toml` produces results from
-`data/sample/` — see Section 4 for why this shows 10 violations rather than 7.
+`data/sample/` — see Section 4 for why this shows 10 violations rather than 9.
 
 ---
 
-## 3. The 7 Seeded Errors
+## 3. The Seeded Errors (R01-R07 Subset)
 
-All 7 errors are present in `trust_domain/synthetic/sample/`. Each is caught by
-exactly one rule, and no clean record triggers a false positive.
+All 9 errors below are present in `trust_domain/synthetic/sample/` and are
+caught by the R01-R07 rules exercised by `tests/test_trust_rules.py`. No clean
+record triggers a false positive. (Two further seeded errors, ERR-16 and the
+non-detection ERR-14b, exercise R13 and are outside this 7-rule subset — see
+`trust_domain/synthetic/generator.py` for the full list including ERR-8
+through ERR-13.)
 
 | Error | Rule ID | What it tests | Record | Expected finding |
 |---|---|---|---|---|
@@ -62,6 +69,8 @@ exactly one rule, and no clean record triggers a false positive.
 | ERR-5 | R04_UNMATCHED_BANK_LINE | Bank statement line with no matching ledger entry beyond posting window | B031 (2026-05-22) | $15,000 unidentified credit; no matched ledger entry; open 34 days (threshold 5) |
 | ERR-6 | R06_FIT_OVERHELD | Firm Interest in Trust balance held beyond transfer deadline | M021 (FIT account) | $125.00 FIT balance credited 2026-06-01; held 24 days (threshold 14) — transfer overdue |
 | ERR-7 | R07_FEE_WITHOUT_INVOICE | Fee or disbursement entry lacks a valid INV-XXXXX invoice reference | L037 (matter M012) | LINZ title search fee $200.00; reference="" — no INV-XXXXX reference found |
+| ERR-14a | R01_OVERDRAWN_CLIENT_LEDGER | Cross-matter correlation (Nguy pattern): a same-day unexplained credit elsewhere offsets this deficit | L053 (matter M022) | Balance -$1,800.00 NZD after payment on 2026-06-24; correlated with unexplained credit L055/M023 |
+| ERR-15 | R01_OVERDRAWN_CLIENT_LEDGER | Gradual deficit via 4 smaller transfers over consecutive months (Ms M pattern), not one dramatic overdraw | L061 (matter M025) | Balance -$400.00 NZD after the 4th of 4 transfers totaling $6,400 against a $6,000 opening balance |
 
 ---
 
@@ -79,14 +88,14 @@ Running `python run.py --config trust_domain/config/coastal_law.toml` uses
   `trust_domain/synthetic/sample/` these descriptions were changed to remove the
   keyword, and a `reference` column was added)
 
-This produces **10 violations** from `data/sample/` versus **7** from
+This produces **10 violations** from `data/sample/` versus **9** from
 `trust_domain/synthetic/sample/`. This difference is expected and does not indicate
 an engine error. The `data/sample/` dataset is a Phase 1 scaffold; the
 `trust_domain/synthetic/sample/` dataset is the definitive rule-testing fixture.
 
 To demo the engine to a prospective client, use the test suite (Option B above),
 which always runs against `trust_domain/synthetic/sample/` and produces the
-deterministic 7-violation result.
+deterministic 9-violation result.
 
 ---
 
@@ -99,9 +108,9 @@ python -m pytest tests/test_trust_rules.py -v -k "integration"
 ```
 
 Specifically:
-- `test_exactly_7_violations_total` — asserts the engine finds exactly 7 violations, no more
+- `test_exactly_9_violations_total` — asserts the engine finds exactly 9 violations, no more
 - `test_violation_record_ids_match_expected_errors` — asserts the exact
-  `(rule_id, record_id)` pairs match the 7 seeded errors in the table above
+  `(rule_id, record_id)` pairs match the 9 seeded errors in the table above
 
 To run the full test suite and confirm no regressions:
 
@@ -109,4 +118,4 @@ To run the full test suite and confirm no regressions:
 python -m pytest -q
 ```
 
-Expected result: **300 passed, 0 skipped, 0 failed** (as of Phase 4 completion).
+Historical note: 300 passed, 0 skipped, 0 failed as of Phase 4 (superseded).

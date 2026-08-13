@@ -19,6 +19,12 @@ targeted changes required to exercise all trust-domain rules:
   ERR-12b R12_BULK_DEPOSIT_UNALLOCATED  — B047, allocations sum $5,500 > credit $5,000
   ERR-12c R12_BULK_DEPOSIT_UNALLOCATED  — B048, credit $15,000 with zero allocations
   ERR-13 R13_BANK_BALANCE_OVERDRAWN     — B050, running_balance_nzd=-14175.00
+  ERR-14 R01_OVERDRAWN_CLIENT_LEDGER    — L053, cross-matter correlation (deficit side),
+                                           modeled on the NZLS Nguy disciplinary decision
+  ERR-15 R01_OVERDRAWN_CLIENT_LEDGER    — L061, gradual deficit via 4 smaller transfers,
+                                           modeled on the NZLS "Ms M" disciplinary decision
+  ERR-16 R13_BANK_BALANCE_OVERDRAWN     — B055, gradual bank-side deficit via 4 smaller
+                                           debits, same "Ms M" pattern applied to R13
 
 Key differences from data/generate_sample.py (DO NOT MODIFY THAT FILE):
   - LEDGER_HEADERS gains a "reference" column (all existing rows get "")
@@ -41,6 +47,11 @@ Key differences from data/generate_sample.py (DO NOT MODIFY THAT FILE):
   - allocations.csv added (9 rows; B046 under, B047 over, B048 absent, B049 exact-match)
   - Matter balances updated: M003→89000, M004→32650, M005→7500, M007→67000,
     M008→125000, M012→57800, M015→27500, M018→37500, M020→75500
+  - M022-M026 added (ERR-14/ERR-15 seeds + clean complements — see "Scenario A/B"
+    comment block above LEDGER_ROWS for provenance and design notes)
+  - L052-L066 added (client_ledger rows for M022-M026)
+  - B052-B056 added (bank-only ERR-16 seed: gradual unauthorised-transfer pattern
+    with no client-ledger counterpart — see comment block)
   - Output directory: trust_domain/synthetic/sample/
 
 Usage:
@@ -97,6 +108,32 @@ MATTER_ROWS = [
     ("M020", "Yamamoto, Kenji",                "38-9015-0789012-00", "PROPERTY_PURCHASE", "Purchase of 17 Gladstone Road, Parnell",            "2026-06-01", "",           "2026-06-24",    "75500.00",   "ACTIVE"),
     # ERR-6: FIT matter — balance held 24 days (2026-06-01 to 2026-06-25) > 14-day deadline
     ("M021", "Firm Interest in Trust (FIT account)", "01-0748-0234567-00", "FIT",         "FIT pooled trust interest account [ERR-6: OVERHELD - 24 days, deadline 14]", "2026-06-01", "", "2026-06-01", "125.00",  "ACTIVE"),
+    # ── Scenario A (ERR-14): cross-matter correlation, modeled on the NZ Lawyers
+    # and Conveyancers Disciplinary Tribunal finding re: practitioner Nguy (struck
+    # off; NZLS decision "Breaches of fundamental duties in multiple matters",
+    # published lawsociety.org.nz) — funds nominally held for one client were used
+    # to cover another client's shortfall, visible directly in the trust account
+    # client ledgers. See the note on L053/L055 below for what R01 does and does
+    # not catch here.
+    # M022 balance = -1800.00 (final balance after L053, the deficit entry)
+    ("M022", "Reid, Connor J.",                "12-3099-0456123-00", "PROPERTY_PURCHASE", "Purchase of 5 Fenwick Street, Grey Lynn [ERR-14a: OVERDRAWN - cross-matter correlation, see M023]", "2026-06-15", "", "2026-06-24", "-1800.00", "ACTIVE"),
+    # M023 balance = 2300.00 (final balance after L055, the unexplained credit)
+    ("M023", "Whitfield Family Trust",         "01-0755-0678234-00", "ESTATE",            "Administration of estate - Whitfield [ERR-14b: unexplained credit correlated with M022 deficit]", "2026-06-01", "", "2026-06-24", "2300.00", "ACTIVE"),
+    # M024: clean complement to ERR-14 (ordinary same-day receipt, no correlation)
+    ("M024", "Ahmed, Farah",                   "02-0166-0789345-00", "PROPERTY_PURCHASE", "Purchase of 9 Coronation Road, Mission Bay",        "2026-06-20", "", "2026-06-24", "2500.00",  "ACTIVE"),
+    # ── Scenario B (ERR-15/ERR-16): gradual deficit via a series of smaller
+    # transfers, modeled on the NZ Lawyers and Conveyancers Disciplinary Tribunal
+    # "Ms M" decision (struck off; NZLS decision "Lawyer struck off for
+    # misappropriating client funds", published lawsociety.org.nz) — unauthorised
+    # transfers to the firm's office/business account disguised among otherwise
+    # normal transaction volume over several months, rather than one dramatic
+    # event. ERR-15 seeds this on the client ledger (M025, caught by R01); ERR-16
+    # seeds the equivalent pattern on the bank statement (B052-B055, caught by
+    # R13) — see comment blocks at L058 and B052 below.
+    # M025 balance = -400.00 (final balance after L061, the 4th transfer)
+    ("M025", "Ferreira, Lucas M.",             "38-9022-0890456-00", "PROPERTY_PURCHASE", "Purchase of 21 Tawa Grove, Birkenhead [ERR-15: OVERDRAWN - gradual deficit via disguised transfers]", "2026-02-01", "", "2026-06-10", "-400.00", "ACTIVE"),
+    # M026: clean complement to ERR-15 (4 smaller legitimate disbursements, never overdrawn)
+    ("M026", "Delgado, Sofia R.",              "03-0759-0901567-00", "PROPERTY_PURCHASE", "Purchase of 14 Kauri Point Road, Herne Bay",        "2026-02-10", "", "2026-06-15", "1500.00",  "ACTIVE"),
 ]
 
 
@@ -259,6 +296,91 @@ LEDGER_ROWS = [
      "5000.00",   "0.00",      "125000.00",  "Y", "2026-06-24", "", ""),
     ("L051", "M012", "2026-06-24", "Receipt - client funds received (bulk deposit portion)",
      "3000.00",   "0.00",      "57800.00",   "Y", "2026-06-24", "", ""),
+    # ── ERR-14a/b: cross-matter correlation (Nguy pattern) — see comment above M022.
+    # No trust_bank_statement counterpart is added for L052-L056: the Nguy pattern
+    # is a misallocation between client ledgers within the SAME pooled trust bank
+    # account, not an external cash movement, so it is deliberately invisible at
+    # the bank level (matching the decision's description of the pattern being
+    # visible only in the client ledgers). L052/L054 are ordinary opening receipts
+    # establishing each new matter's starting balance.
+    ("L052", "M022", "2026-06-20", "Receipt - Purchase deposit received",
+     "3000.00",   "0.00",      "3000.00",    "Y", "2026-06-22", "", ""),
+    # ERR-14a: payment exceeds funds held for this matter — R01 catches this row.
+    ("L053", "M022", "2026-06-24", "Payment - Settlement payment to vendor's solicitors",
+     "0.00",      "4800.00",   "-1800.00",   "Y", "2026-06-25",
+     "ERR-14a: payment exceeds funds held; matter overdrawn by $1,800 (a demo "
+     "figure invented for this dataset, not drawn from the real case) - "
+     "correlated same-day unexplained credit to M023 (L055). Modeled on the "
+     "pattern described in the NZLS Nguy decision, 'Breaches of fundamental "
+     "duties in multiple matters': funds nominally held for one client used to "
+     "cover another client's shortfall, visible in trust account client "
+     "ledgers.", ""),
+    ("L054", "M023", "2026-06-10", "Receipt - Estate funds received - Whitfield Trust",
+     "500.00",    "0.00",      "500.00",     "Y", "2026-06-12", "", ""),
+    # ERR-14b: unexplained credit, correlated with L053 by date and amount ($1,800,
+    # a demo figure - see note on L053). R01 does NOT flag this row (balance
+    # stays positive) - see notes field.
+    ("L055", "M023", "2026-06-24", "Receipt - Client funds received",
+     "1800.00",   "0.00",      "2300.00",    "Y", "2026-06-25",
+     "ERR-14b: unexplained credit, no matching legitimate receipt narrative; "
+     "same date and same amount ($1,800, a demo figure) as M022 deficit (L053) "
+     "- modeled on the correlated cross-matter pattern described in the NZLS "
+     "Nguy decision (see note on L053 for the full citation). NOT caught by "
+     "R01 (balance positive); detecting the cross-matter correlation itself "
+     "would require a new rule tracing money flows between matters - out of "
+     "scope here.", ""),
+    # Clean complement to ERR-14: ordinary same-day receipt, no correlation.
+    ("L056", "M024", "2026-06-24", "Receipt - Purchase deposit received",
+     "2500.00",   "0.00",      "2500.00",    "Y", "2026-06-25",
+     "Clean complement to ERR-14: ordinary explained receipt dated same day as "
+     "the ERR-14 pair (L053/L055); demonstrates that a same-day credit alone is "
+     "not flagged - only the deficit side is (correctly, by R01).", ""),
+    # ── ERR-15: gradual deficit via 4 smaller transfers (Ms M pattern) — see
+    # comment above M025. No trust_bank_statement counterpart is added for
+    # L057-L061 (kept as a client-ledger-only seed for R01); the equivalent
+    # bank-side pattern is seeded independently as ERR-16 (B052-B055) below.
+    ("L057", "M025", "2026-02-10", "Receipt - Purchase deposit received",
+     "6000.00",   "0.00",      "6000.00",    "Y", "2026-02-12", "", ""),
+    ("L058", "M025", "2026-03-10", "Payment - Office account transfer (costs on account)",
+     "0.00",      "1800.00",   "4200.00",    "Y", "2026-03-12",
+     "ERR-15 (1 of 4): part of a series of smaller transfers to the firm's office "
+     "account, disguised among normal transaction volume. Modeled on the "
+     "pattern described in the NZLS 'Ms M' decision, 'Lawyer struck off for "
+     "misappropriating client funds': misappropriation via transfers to "
+     "office/business account over several months, not one dramatic event. "
+     "The specific dollar amounts in this series (L058-L061) are demo figures "
+     "invented for this dataset, not drawn from the real case.", ""),
+    ("L059", "M025", "2026-04-10", "Payment - Costs on account transfer (file recovery)",
+     "0.00",      "1900.00",   "2300.00",    "Y", "2026-04-12",
+     "ERR-15 (2 of 4): see L058.", ""),
+    ("L060", "M025", "2026-05-10", "Payment - Office account transfer (professional costs)",
+     "0.00",      "1700.00",   "600.00",     "Y", "2026-05-12",
+     "ERR-15 (3 of 4): see L058.", ""),
+    # ERR-15 (4 of 4): this entry crosses into deficit - R01 catches it here.
+    ("L061", "M025", "2026-06-10", "Payment - Office account transfer (final costs on account)",
+     "0.00",      "1000.00",   "-400.00",    "Y", "2026-06-12",
+     "ERR-15 (4 of 4): matter overdrawn by $400 after this transfer - the "
+     "cumulative effect of the L058-L061 series ($6,400 transferred vs $6,000 "
+     "held; these figures are demo values, not from the real case - see the "
+     "note on L058 for the case citation). Confirms R01 catches the deficit "
+     "even though it emerged gradually across four smaller entries rather "
+     "than one large overdraw.", ""),
+    # Clean complement to ERR-15: 4 smaller legitimate disbursements, never overdrawn.
+    ("L062", "M026", "2026-02-15", "Receipt - Purchase deposit received",
+     "6000.00",   "0.00",      "6000.00",    "Y", "2026-02-17", "", ""),
+    ("L063", "M026", "2026-03-15", "Payment - Search costs (LINZ)",
+     "0.00",      "1500.00",   "4500.00",    "Y", "2026-03-17", "", ""),
+    ("L064", "M026", "2026-04-15", "Payment - Valuation report costs",
+     "0.00",      "1200.00",   "3300.00",    "Y", "2026-04-17", "", ""),
+    ("L065", "M026", "2026-05-15", "Payment - LIM report costs",
+     "0.00",      "1000.00",   "2300.00",    "Y", "2026-05-17", "", ""),
+    ("L066", "M026", "2026-06-15", "Payment - Building report costs",
+     "0.00",      "800.00",    "1500.00",    "Y", "2026-06-17",
+     "Clean complement to ERR-15: several smaller legitimate disbursements over "
+     "consecutive months (progress payments for genuine property-purchase "
+     "costs), balance stays positive throughout - demonstrates that a gradual "
+     "multi-transaction pattern alone, without a resulting deficit, is not "
+     "flagged.", ""),
 ]
 
 
@@ -357,6 +479,44 @@ BANK_ROWS = [
     # matched_ledger_entry set to a distinct sentinel so R04/R12 do not flag it either.
     # -14175.00 + 20000.00 = 5825.00
     ("B051", _TA, "2026-06-26", "Credit - Bank error reversal (correcting entry)", "20000.00", "0.00", "5825.00", "BANK-CORRECTION", "Clean: running balance restored positive - should NOT be flagged by R13"),
+    # ── ERR-16: gradual bank-side deficit via 4 smaller unauthorised-looking
+    # debits, modeled on the same NZ Lawyers and Conveyancers Disciplinary
+    # Tribunal "Ms M" decision as ERR-15 (struck off; NZLS decision "Lawyer
+    # struck off for misappropriating client funds") — applied here to
+    # R13_BANK_BALANCE_OVERDRAWN instead of R01, to confirm the rule still
+    # catches a deficit that emerges gradually across several smaller debits
+    # disguised among normal transaction volume, not just a single dramatic
+    # overdraw like ERR-13/B050. matched_ledger_entry uses a non-ledger
+    # sentinel (not tied to any specific client matter) - same technique as
+    # B050's "BANK-ERROR", so R04/R12 do not also flag these lines.
+    # 5825.00 - 1800.00 = 4025.00
+    ("B052", _TA, "2026-02-20", "Debit - Professional costs transfer (recovered disbursements)", "0.00", "1800.00", "4025.00", "OFFICE-TRANSFER",
+     "ERR-16 (1 of 4): part of a series of smaller unauthorised-looking debits to "
+     "the office account, disguised among normal transaction volume. Modeled on "
+     "the pattern described in the NZLS 'Ms M' decision, 'Lawyer struck off for "
+     "misappropriating client funds': misappropriation via transfers to "
+     "office/business account over several months. The specific dollar amounts "
+     "in this series (B052-B055) are demo figures invented for this dataset, "
+     "not drawn from the real case."),
+    # 4025.00 - 1900.00 = 2125.00
+    ("B053", _TA, "2026-03-20", "Debit - Costs on account transfer", "0.00", "1900.00", "2125.00", "OFFICE-TRANSFER",
+     "ERR-16 (2 of 4): see B052."),
+    # 2125.00 - 1700.00 = 425.00
+    ("B054", _TA, "2026-04-20", "Debit - Office account transfer (billing recovery)", "0.00", "1700.00", "425.00", "OFFICE-TRANSFER",
+     "ERR-16 (3 of 4): see B052."),
+    # 425.00 - 1000.00 = -575.00 — crosses into deficit here; R13 catches this row.
+    ("B055", _TA, "2026-05-20", "Debit - Office account transfer (final costs)", "0.00", "1000.00", "-575.00", "OFFICE-TRANSFER",
+     "ERR-16 (4 of 4): trust bank account overdrawn by $575 after this debit - "
+     "the cumulative effect of the B052-B055 series ($6,400 total; these "
+     "figures are demo values, not from the real case - see the note on B052 "
+     "for the case citation). Confirms R13 catches the deficit even though it "
+     "emerged gradually across four smaller debits rather than one large "
+     "overdraw like ERR-13."),
+    # Clean complement to ERR-16: correcting credit restores the balance to positive.
+    # -575.00 + 20000.00 = 19425.00
+    ("B056", _TA, "2026-05-25", "Credit - Correcting entry (trust account restored)", "20000.00", "0.00", "19425.00", "OFFICE-TRANSFER-REVERSAL",
+     "Clean complement to ERR-16: correcting credit restores trust account to "
+     "positive - should NOT be flagged by R13."),
 ]
 
 
@@ -450,7 +610,7 @@ def generate(output_dir: Path) -> None:
         print(f"  {name}.csv  -  {n} rows")
 
     print("""
-Seeded errors (12 rule types, 14 seeded records):
+Seeded errors (12 rule types, 17 seeded records):
   ERR-1   Unreconciled entry > 30 days    ledger L009 / matter M008 / 89 days old
   ERR-2   Overdrawn client matter         ledger L021 / matter M016 / balance -$2,500
   ERR-3   Dormant matter with balance     matter M017 / balance $8,500 / last activity 2024-12-15
@@ -465,6 +625,10 @@ Seeded errors (12 rule types, 14 seeded records):
   ERR-12b Over-allocated bulk deposit     bank B047 / $5,000 / allocations sum $5,500
   ERR-12c Bulk deposit no allocations     bank B048 / $15,000 / zero allocation rows
   ERR-13  Bank account overdrawn          bank B050 / running balance -$14,175.00
+  ERR-14a Cross-matter correlation (deficit)  ledger L053 / matter M022 / balance -$1,800 [demo figure; pattern modeled on NZLS Nguy decision]
+  ERR-14b Cross-matter correlation (credit)   ledger L055 / matter M023 / unexplained +$1,800 [demo figure] (not caught by R01)
+  ERR-15  Gradual deficit (client ledger)     ledger L061 / matter M025 / balance -$400 after 4 transfers [demo figures; pattern modeled on NZLS "Ms M" decision]
+  ERR-16  Gradual deficit (bank statement)    bank B055 / running balance -$575 after 4 debits [demo figures; pattern modeled on NZLS "Ms M" decision]
 """)
 
 

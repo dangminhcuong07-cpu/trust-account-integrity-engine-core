@@ -2,7 +2,9 @@
 Tests for trust_domain.reports.exception_report (Step 2.3).
 
 Reference date throughout: 2026-06-25.
-All 7 seeded errors are exercised via the trust_domain synthetic data.
+9 seeded violations (R01-R07 scope; R01 now catches 3: L021, L053, L061 -
+see ERR-14a and ERR-15 in trust_domain/synthetic/generator.py) are exercised
+via the trust_domain synthetic data.
 """
 
 from __future__ import annotations
@@ -33,7 +35,7 @@ def trust_sample_data():
     generate(SAMPLE_DIR)
 
 
-# ── Collect all 7 violations from synthetic data ──────────────────────────────
+# ── Collect all 9 violations from synthetic data ──────────────────────────────
 
 def _all_violations() -> list[TrustRuleResult]:
     from data.load_sample import load_file
@@ -82,13 +84,13 @@ def _viol(rule_id: str, record_id: str, severity: str,
 
 class TestBuildReportDict:
 
-    def test_total_violations_7(self):
+    def test_total_violations_9(self):
         d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
-        assert d["total_violations"] == 7
+        assert d["total_violations"] == 9
 
-    def test_critical_count_is_2(self):
+    def test_critical_count_is_4(self):
         d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
-        assert d["critical_count"] == 2   # R01 + R03
+        assert d["critical_count"] == 4   # R01 x3 (L021, L053, L061) + R03
 
     def test_high_count_is_5(self):
         d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
@@ -111,7 +113,7 @@ class TestBuildReportDict:
     def test_rank_is_1_based_sequential(self):
         d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
         ranks = [v["rank"] for v in d["violations"]]
-        assert ranks == list(range(1, 8))
+        assert ranks == list(range(1, 10))
 
     def test_all_violation_fields_populated(self):
         d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
@@ -265,7 +267,7 @@ class TestWriteReport:
     def test_returns_dict_with_correct_total(self, tmp_path):
         out = tmp_path / "report.md"
         d   = write_report(_all_violations(), PERIOD, FIRM, REF_DATE, out)
-        assert d["total_violations"] == 7
+        assert d["total_violations"] == 9
 
     def test_creates_nested_parent_directories(self, tmp_path):
         out = tmp_path / "trust" / "reports" / "2026" / "may.md"

@@ -20,3 +20,8 @@ M018,"Kowalski, Adam & Ewa",02-0158-0678901-00,PROPERTY_PURCHASE,"Purchase of 33
 M019,"Nkosi, Thabo & Nomsa",03-0742-0345678-00,PROPERTY_SALE,"Sale of 9 Harbour View Road, Northcote",2026-04-25,2026-06-10,2026-06-10,0.00,CLOSED
 M020,"Yamamoto, Kenji",38-9015-0789012-00,PROPERTY_PURCHASE,"Purchase of 17 Gladstone Road, Parnell",2026-06-01,,2026-06-24,75500.00,ACTIVE
 M021,Firm Interest in Trust (FIT account),01-0748-0234567-00,FIT,"FIT pooled trust interest account [ERR-6: OVERHELD - 24 days, deadline 14]",2026-06-01,,2026-06-01,125.00,ACTIVE
+M022,"Reid, Connor J.",12-3099-0456123-00,PROPERTY_PURCHASE,"Purchase of 5 Fenwick Street, Grey Lynn [ERR-14a: OVERDRAWN - cross-matter correlation, see M023]",2026-06-15,,2026-06-24,-1800.00,ACTIVE
+M023,Whitfield Family Trust,01-0755-0678234-00,ESTATE,Administration of estate - Whitfield [ERR-14b: unexplained credit correlated with M022 deficit],2026-06-01,,2026-06-24,2300.00,ACTIVE
+M024,"Ahmed, Farah",02-0166-0789345-00,PROPERTY_PURCHASE,"Purchase of 9 Coronation Road, Mission Bay",2026-06-20,,2026-06-24,2500.00,ACTIVE
+M025,"Ferreira, Lucas M.",38-9022-0890456-00,PROPERTY_PURCHASE,"Purchase of 21 Tawa Grove, Birkenhead [ERR-15: OVERDRAWN - gradual deficit via disguised transfers]",2026-02-01,,2026-06-10,-400.00,ACTIVE
+M026,"Delgado, Sofia R.",03-0759-0901567-00,PROPERTY_PURCHASE,"Purchase of 14 Kauri Point Road, Herne Bay",2026-02-10,,2026-06-15,1500.00,ACTIVE

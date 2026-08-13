@@ -2,7 +2,8 @@
 End-to-end test for the full integrity engine pipeline.
 
 Calls run_pipeline() directly (no subprocess). Uses trust_domain/synthetic/sample
-as input_dir so the violation count is deterministic (exactly 7 seeded errors).
+as input_dir so the violation count is deterministic (exactly 19 seeded errors
+across the 12 enabled rules).
 coastal_law.toml supplies all other config (firm name, thresholds, rules).
 """
 from __future__ import annotations
@@ -65,8 +66,9 @@ def test_run_log_validation_passed(pipeline_result):
     assert run_log["validation_passed"] is True
 
 
-def test_exception_report_total_violations_is_16(pipeline_result):
-    # R01:  L021 (1)
+def test_exception_report_total_violations_is_19(pipeline_result):
+    # R01:  L021, L053, L061 (3) — L053 is ERR-14a (Nguy cross-matter), L061 is
+    #       ERR-15 (Ms M gradual deficit via 4 smaller transfers)
     # R02:  M017 (1)
     # R03:  R002 (1)
     # R04:  B031, B048 (2) — B048 is orphan credit, also caught by R12
@@ -77,12 +79,12 @@ def test_exception_report_total_violations_is_16(pipeline_result):
     # R09:  L040 (1)
     # R10:  L041 (1)
     # R12:  B031, B046, B047, B048 (4)
-    # R13:  B050 (1)
-    # Total = 16
+    # R13:  B050, B055 (2) — B055 is ERR-16 (Ms M gradual deficit, bank side)
+    # Total = 19
     out = pipeline_result["output_dir"]
     report = json.loads((out / "exception_report.json").read_text(encoding="utf-8"))
-    assert report["total_violations"] == 16, (
-        f"Expected 16 violations, got {report['total_violations']}"
+    assert report["total_violations"] == 19, (
+        f"Expected 19 violations, got {report['total_violations']}"
     )
 
 

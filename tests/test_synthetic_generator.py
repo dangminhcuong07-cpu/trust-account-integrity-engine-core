@@ -2,7 +2,7 @@
 Tests for trust_domain/synthetic/generator.py.
 
 The generator has one public function: generate(output_dir: Path) -> None.
-It always writes the same hardcoded dataset (14 seeded error records across
+It always writes the same hardcoded dataset (17 seeded error records across
 12 rule types: R01-R10, R12, R13).
 There is no seed_errors parameter and no ground_truth.json output.
 Tests verify: file creation, row counts, seeded-error records present,
@@ -73,15 +73,15 @@ class TestFilesCreated:
 class TestRowCounts:
     def test_matter_register_row_count(self, generated):
         rows = _read_csv(generated / "matter_register.csv")
-        assert len(rows) == 21, f"Expected 21 matters, got {len(rows)}"
+        assert len(rows) == 26, f"Expected 26 matters, got {len(rows)}"
 
     def test_client_ledger_row_count(self, generated):
         rows = _read_csv(generated / "client_ledger.csv")
-        assert len(rows) == 51, f"Expected 51 ledger entries, got {len(rows)}"
+        assert len(rows) == 66, f"Expected 66 ledger entries, got {len(rows)}"
 
     def test_trust_bank_statement_row_count(self, generated):
         rows = _read_csv(generated / "trust_bank_statement.csv")
-        assert len(rows) == 51, f"Expected 51 bank lines, got {len(rows)}"
+        assert len(rows) == 56, f"Expected 56 bank lines, got {len(rows)}"
 
     def test_reconciliation_summary_row_count(self, generated):
         rows = _read_csv(generated / "reconciliation_summary.csv")
@@ -388,4 +388,110 @@ class TestErr13SeededRecords:
         assert line is not None, "B051 not found in trust_bank_statement.csv"
         assert float(line["running_balance_nzd"]) > 0, (
             "B051 (clean complement) must have positive running_balance_nzd"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Group 7 — ERR-14/15/16 seeded error records present
+# ---------------------------------------------------------------------------
+
+class TestErr14CrossMatterCorrelation:
+    """
+    ERR-14: modeled on the NZ Lawyers and Conveyancers Disciplinary Tribunal
+    finding re: practitioner Nguy (struck off; NZLS decision "Breaches of
+    fundamental duties in multiple matters", lawsociety.org.nz) - funds
+    nominally held for one client used to cover another client's shortfall.
+    """
+
+    def test_err14a_l053_deficit_correlated_with_m022(self, generated):
+        rows = _read_csv(generated / "client_ledger.csv")
+        entry = next((r for r in rows if r["entry_id"] == "L053"), None)
+        assert entry is not None, "L053 not found in client_ledger.csv"
+        assert entry["matter_ref"] == "M022"
+        assert float(entry["balance_after_nzd"]) < 0, (
+            "L053 must have negative balance_after_nzd (ERR-14a)"
+        )
+
+    def test_err14b_l055_unexplained_credit_same_date_and_amount_as_l053(self, generated):
+        rows = _read_csv(generated / "client_ledger.csv")
+        l053 = next(r for r in rows if r["entry_id"] == "L053")
+        l055 = next((r for r in rows if r["entry_id"] == "L055"), None)
+        assert l055 is not None, "L055 not found in client_ledger.csv"
+        assert l055["matter_ref"] == "M023"
+        assert float(l055["receipt_nzd"]) > 0, "L055 must be a credit (ERR-14b)"
+        assert l055["entry_date"] == l053["entry_date"], (
+            "L055 must be dated the same day as the L053 deficit (correlated pattern)"
+        )
+        assert float(l055["receipt_nzd"]) == 1800.00, (
+            "L055 credit must be $1,800 - same amount as the L053 deficit (correlated pattern)"
+        )
+
+    def test_m024_clean_complement_same_day_ordinary_receipt(self, generated):
+        rows = _read_csv(generated / "client_ledger.csv")
+        entry = next((r for r in rows if r["entry_id"] == "L056"), None)
+        assert entry is not None, "L056 not found in client_ledger.csv"
+        assert entry["matter_ref"] == "M024"
+        assert float(entry["balance_after_nzd"]) > 0, (
+            "L056 (clean complement) must have positive balance_after_nzd"
+        )
+
+
+class TestErr15Err16GradualDeficit:
+    """
+    ERR-15/ERR-16: modeled on the NZ Lawyers and Conveyancers Disciplinary
+    Tribunal "Ms M" decision (struck off; NZLS decision "Lawyer struck off
+    for misappropriating client funds", lawsociety.org.nz) - a series of
+    smaller unauthorised transfers to the firm's office/business account,
+    disguised among normal transaction volume, rather than one large event.
+    """
+
+    def test_err15_l061_gradual_deficit_after_four_transfers(self, generated):
+        rows = _read_csv(generated / "client_ledger.csv")
+        m025_entries = [r for r in rows if r["matter_ref"] == "M025"]
+        assert len(m025_entries) == 5, (
+            f"Expected 5 M025 ledger entries (1 opening + 4 transfers), got {len(m025_entries)}"
+        )
+        l061 = next((r for r in rows if r["entry_id"] == "L061"), None)
+        assert l061 is not None, "L061 not found in client_ledger.csv"
+        assert float(l061["balance_after_nzd"]) < 0, (
+            "L061 must have negative balance_after_nzd (ERR-15)"
+        )
+        # Confirms the deficit is gradual: no single transfer in the series
+        # exceeds the matter's opening balance on its own.
+        transfers = [r for r in m025_entries if float(r["payment_nzd"] or 0) > 0]
+        assert len(transfers) == 4
+        for t in transfers:
+            assert float(t["payment_nzd"]) < 6000.00, (
+                "each ERR-15 transfer must be smaller than the opening balance "
+                "(gradual pattern, not one dramatic overdraw)"
+            )
+
+    def test_m026_clean_complement_never_overdrawn(self, generated):
+        rows = _read_csv(generated / "client_ledger.csv")
+        m026_entries = [r for r in rows if r["matter_ref"] == "M026"]
+        assert len(m026_entries) == 5
+        assert all(float(r["balance_after_nzd"]) > 0 for r in m026_entries), (
+            "M026 (clean complement) must never go negative"
+        )
+
+    def test_err16_b055_gradual_bank_deficit_after_four_debits(self, generated):
+        rows = _read_csv(generated / "trust_bank_statement.csv")
+        office_transfer_rows = [
+            r for r in rows if r["matched_ledger_entry"] == "OFFICE-TRANSFER"
+        ]
+        assert len(office_transfer_rows) == 4, (
+            f"Expected 4 ERR-16 OFFICE-TRANSFER debits, got {len(office_transfer_rows)}"
+        )
+        b055 = next((r for r in rows if r["statement_id"] == "B055"), None)
+        assert b055 is not None, "B055 not found in trust_bank_statement.csv"
+        assert float(b055["running_balance_nzd"]) < 0, (
+            "B055 must have negative running_balance_nzd (ERR-16)"
+        )
+
+    def test_b056_clean_complement_restores_positive_balance(self, generated):
+        rows = _read_csv(generated / "trust_bank_statement.csv")
+        b056 = next((r for r in rows if r["statement_id"] == "B056"), None)
+        assert b056 is not None, "B056 not found in trust_bank_statement.csv"
+        assert float(b056["running_balance_nzd"]) > 0, (
+            "B056 (clean complement) must have positive running_balance_nzd"
         )

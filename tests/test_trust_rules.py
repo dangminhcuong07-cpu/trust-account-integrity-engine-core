@@ -14,6 +14,10 @@ Seeded errors:
   ERR-6  M021  FIT balance 24 days old (threshold=14)           → R06_FIT_OVERHELD
   ERR-7  L037  disbursement payment, reference="" (no INV-#)     → R07_FEE_WITHOUT_INVOICE
   ERR-13 B050  running_balance_nzd=-14175.00                     → R13_BANK_BALANCE_OVERDRAWN
+  ERR-14a L053  balance_after_nzd=-1800.00 (Nguy cross-matter)    → R01_OVERDRAWN_CLIENT_LEDGER
+  ERR-14b L055  unexplained credit, correlated with L053          → NOT caught by R01 (by design)
+  ERR-15  L061  balance_after_nzd=-400.00 (Ms M gradual, 4 txns)  → R01_OVERDRAWN_CLIENT_LEDGER
+  ERR-16  B055  running_balance_nzd=-575.00 (Ms M gradual, bank)  → R13_BANK_BALANCE_OVERDRAWN
 """
 
 from __future__ import annotations
@@ -164,11 +168,54 @@ class TestR01OverdrawnLedger:
         assert any(res.record_id == "L021" for res in failures), \
             "ERR-2 (L021) not caught by R01_OVERDRAWN_CLIENT_LEDGER"
 
-    def test_only_one_violation_in_synthetic_data(self):
+    def test_catches_err14a_cross_matter_deficit_from_synthetic_data(self):
+        """ERR-14a: modeled on the NZLS Nguy decision (cross-matter correlation,
+        deficit side). Confirms R01 catches the deficit even though the pattern
+        also involves a correlated unexplained credit elsewhere (L055/M023)."""
         records = _load("client_ledger")
         failures = [res for res in [_r01.overdrawn_ledger(r) for r in records]
                     if not res.passed]
-        assert len(failures) == 1, f"Expected 1 violation, got: {[f.record_id for f in failures]}"
+        assert any(res.record_id == "L053" for res in failures), \
+            "ERR-14a (L053) not caught by R01_OVERDRAWN_CLIENT_LEDGER"
+
+    def test_err14b_unexplained_credit_not_caught_by_r01(self):
+        """ERR-14b: the correlated unexplained credit (L055/M023) has a positive
+        balance, so R01 does not and should not flag it - only the deficit side
+        (L053) is structurally visible to this rule. Detecting the cross-matter
+        correlation itself would require a new rule tracing money between
+        matters; out of scope here."""
+        records = _load("client_ledger")
+        l055 = next(r for r in records if r.record_id == "L055")
+        assert _r01.overdrawn_ledger(l055).passed, \
+            "L055 (unexplained credit, positive balance) should pass R01 - " \
+            "R01 only detects the deficit side of the Nguy pattern"
+
+    def test_catches_err15_gradual_deficit_from_synthetic_data(self):
+        """ERR-15: modeled on the NZLS 'Ms M' decision (gradual deficit via 4
+        smaller transfers over consecutive months, disguised among normal
+        transaction volume). Confirms R01 catches the deficit even though it
+        emerged gradually rather than as one large overdraw."""
+        records = _load("client_ledger")
+        failures = [res for res in [_r01.overdrawn_ledger(r) for r in records]
+                    if not res.passed]
+        assert any(res.record_id == "L061" for res in failures), \
+            "ERR-15 (L061) not caught by R01_OVERDRAWN_CLIENT_LEDGER"
+
+    def test_m026_clean_complement_never_overdrawn(self):
+        """Clean complement to ERR-15: 4 smaller legitimate disbursements over
+        consecutive months, balance never goes negative."""
+        records = _load("client_ledger")
+        m026_entries = [r for r in records if r.data.get("matter_ref") == "M026"]
+        failures = [res for res in [_r01.overdrawn_ledger(r) for r in m026_entries]
+                    if not res.passed]
+        assert failures == [], f"M026 (clean complement) should never overdraw, got: {[f.record_id for f in failures]}"
+
+    def test_only_three_violations_in_synthetic_data(self):
+        records = _load("client_ledger")
+        failures = [res for res in [_r01.overdrawn_ledger(r) for r in records]
+                    if not res.passed]
+        assert len(failures) == 3, f"Expected 3 violations, got: {[f.record_id for f in failures]}"
+        assert {f.record_id for f in failures} == {"L021", "L053", "L061"}
 
 
 # ── R02: Dormant balance ──────────────────────────────────────────────────────
@@ -547,11 +594,30 @@ class TestR13BankBalanceOverdrawn:
         assert _r13.bank_balance_overdrawn(b051).passed, \
             "B051 (balance restored positive) should pass R13"
 
-    def test_only_one_violation_in_synthetic_data(self):
+    def test_catches_err16_gradual_deficit_from_synthetic_data(self):
+        """ERR-16: modeled on the NZLS 'Ms M' decision (same pattern as ERR-15,
+        applied to the trust bank statement instead of the client ledger) - a
+        series of 4 smaller unauthorised-looking debits disguised among normal
+        transaction volume. Confirms R13 catches the deficit even though it
+        emerged gradually rather than as one dramatic overdraw like ERR-13."""
         records = _load("trust_bank_statement")
         failures = [res for res in [_r13.bank_balance_overdrawn(r) for r in records]
                     if not res.passed]
-        assert len(failures) == 1, f"Expected 1 violation, got: {[f.record_id for f in failures]}"
+        assert any(res.record_id == "B055" for res in failures), \
+            "ERR-16 (B055) not caught by R13_BANK_BALANCE_OVERDRAWN"
+
+    def test_b056_clean_complement_passes(self):
+        records = _load("trust_bank_statement")
+        b056 = next(r for r in records if r.record_id == "B056")
+        assert _r13.bank_balance_overdrawn(b056).passed, \
+            "B056 (balance restored positive) should pass R13"
+
+    def test_only_two_violations_in_synthetic_data(self):
+        records = _load("trust_bank_statement")
+        failures = [res for res in [_r13.bank_balance_overdrawn(r) for r in records]
+                    if not res.passed]
+        assert len(failures) == 2, f"Expected 2 violations, got: {[f.record_id for f in failures]}"
+        assert {f.record_id for f in failures} == {"B050", "B055"}
 
 
 # ── TrustRuleResult contract ──────────────────────────────────────────────────
@@ -613,16 +679,18 @@ def _collect_all_violations() -> list[TrustRuleResult]:
 
 class TestIntegration:
 
-    def test_exactly_7_violations_total(self):
+    def test_exactly_9_violations_total(self):
         violations = _collect_all_violations()
         ids = [(v.rule_id, v.record_id) for v in violations]
-        assert len(violations) == 7, f"Expected 7 violations, got {len(violations)}: {ids}"
+        assert len(violations) == 9, f"Expected 9 violations, got {len(violations)}: {ids}"
 
     def test_violation_record_ids_match_expected_errors(self):
         violations = _collect_all_violations()
         by_rule = {(v.rule_id, v.record_id) for v in violations}
         expected = {
             ("R01_OVERDRAWN_CLIENT_LEDGER",   "L021"),
+            ("R01_OVERDRAWN_CLIENT_LEDGER",   "L053"),
+            ("R01_OVERDRAWN_CLIENT_LEDGER",   "L061"),
             ("R02_DORMANT_BALANCE",            "M017"),
             ("R03_RECON_BREAK",                "R002"),
             ("R04_UNMATCHED_BANK_LINE",        "B031"),
