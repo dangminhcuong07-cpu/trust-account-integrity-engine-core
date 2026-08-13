@@ -42,7 +42,7 @@ Writes six CSVs to `data/sample/`:
 `matter_register`, `client_ledger`, `trust_bank_statement`,
 `reconciliation_summary`, `invoice_register`, `allocations`.
 
-The dataset contains **13 seeded error scenarios across the 11 supported
+The dataset contains **17 seeded error scenarios across the 12 supported
 rules** (R12 has three variants: under-allocated, over-allocated, and
 zero-allocation bulk deposits) and clean complements for every rule.
 
@@ -72,14 +72,14 @@ All outputs land in `output/coastal_law/`:
 ## 5. Expected result
 
 ```
-Run complete - 15 violations found (6 CRITICAL, 9 HIGH)
+Run complete - 19 violations found (10 CRITICAL, 9 HIGH)
 Output written to: output/coastal_law
 Exception report: output/coastal_law/exception_report.pdf
 Evidence pack:    output/coastal_law/evidence_pack.md
 Run log:          output/coastal_law/run_log.json
 ```
 
-The 15 violations are deterministic — same ledger always produces the same report.
+The 19 violations are deterministic — same ledger always produces the same report.
 
 ---
 
@@ -89,7 +89,7 @@ The 15 violations are deterministic — same ledger always produces the same rep
 pytest
 ```
 
-Expected: **444 passed, 0 failed, 0 skipped**.
+Expected: **468 passed, 0 failed, 0 skipped**.
 
 ---
 
