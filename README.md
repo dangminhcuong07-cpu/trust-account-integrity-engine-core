@@ -39,7 +39,7 @@ Citation strings used verbatim throughout the codebase:
 | R12 | `LCA (Trust Account) Regulations 2008, Reg 12(1)(b) (client fund segregation) and Reg 11 (traceability)` | Verified 20 Jul 2026 |
 | R13 | `LCA (Trust Account) Regulations 2008, Reg 6` | Verified 26 Jul 2026 |
 
-Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 455 tests, 0 skipped.
+Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 468 tests, 0 skipped.
 
 ---
 
@@ -102,7 +102,7 @@ Outputs land in `output/<firm-slug>/`:
 pytest
 ```
 
-444 tests, 0 skipped. Coverage spans every rule, the ingestion layer, the report writers, the run-log layer, the evidence pack, and the funds-trail report.
+468 tests, 0 skipped. Coverage spans every rule, the ingestion layer, the report writers, the run-log layer, the evidence pack, and the funds-trail report.
 
 ---
 
@@ -137,7 +137,7 @@ trust_domain/
   synthetic/      # Synthetic ledger data generator
 integrity_engine/ # Rule-runner, run log, flagging, stats
 data/sample/      # Synthetic demo ledger (CSV)
-tests/            # 444 pytest tests
+tests/            # 468 pytest tests
 docs/             # Data-handling boundary, onboarding, demo guide
 ```
 
