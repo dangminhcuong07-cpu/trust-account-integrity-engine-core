@@ -73,11 +73,11 @@ class TestFilesCreated:
 class TestRowCounts:
     def test_matter_register_row_count(self, generated):
         rows = _read_csv(generated / "matter_register.csv")
-        assert len(rows) == 26, f"Expected 26 matters, got {len(rows)}"
+        assert len(rows) == 29, f"Expected 29 matters, got {len(rows)}"
 
     def test_client_ledger_row_count(self, generated):
         rows = _read_csv(generated / "client_ledger.csv")
-        assert len(rows) == 66, f"Expected 66 ledger entries, got {len(rows)}"
+        assert len(rows) == 77, f"Expected 77 ledger entries, got {len(rows)}"
 
     def test_trust_bank_statement_row_count(self, generated):
         rows = _read_csv(generated / "trust_bank_statement.csv")
@@ -85,7 +85,7 @@ class TestRowCounts:
 
     def test_reconciliation_summary_row_count(self, generated):
         rows = _read_csv(generated / "reconciliation_summary.csv")
-        assert len(rows) == 3, f"Expected 3 recon rows, got {len(rows)}"
+        assert len(rows) == 5, f"Expected 5 recon rows, got {len(rows)}"
 
     def test_invoice_register_row_count(self, generated):
         rows = _read_csv(generated / "invoice_register.csv")
@@ -495,3 +495,21 @@ class TestErr15Err16GradualDeficit:
         assert float(b056["running_balance_nzd"]) > 0, (
             "B056 (clean complement) must have positive running_balance_nzd"
         )
+
+
+class TestLineEndingsAreStable:
+    """Known issue #5 guard: regenerating the samples must not churn the
+    tracked files. csv.writer defaults to CRLF; the committed samples are LF."""
+
+    def test_generated_csvs_use_lf_only(self, tmp_path):
+        from trust_domain.synthetic.generator import generate
+        generate(tmp_path)
+        for p in tmp_path.glob("*.csv"):
+            assert b"\r\n" not in p.read_bytes(), f"{p.name} was written with CRLF"
+
+    def test_regeneration_is_byte_identical(self, tmp_path):
+        from trust_domain.synthetic.generator import generate
+        a, b = tmp_path / "a", tmp_path / "b"
+        generate(a); generate(b)
+        for p in sorted(a.glob("*.csv")):
+            assert p.read_bytes() == (b / p.name).read_bytes(), f"{p.name} differs between runs"

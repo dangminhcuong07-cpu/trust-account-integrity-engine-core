@@ -25,3 +25,6 @@ M023,Whitfield Family Trust,01-0755-0678234-00,ESTATE,Administration of estate -
 M024,"Ahmed, Farah",02-0166-0789345-00,PROPERTY_PURCHASE,"Purchase of 9 Coronation Road, Mission Bay",2026-06-20,,2026-06-24,2500.00,ACTIVE
 M025,"Ferreira, Lucas M.",38-9022-0890456-00,PROPERTY_PURCHASE,"Purchase of 21 Tawa Grove, Birkenhead [ERR-15: OVERDRAWN - gradual deficit via disguised transfers]",2026-02-01,,2026-06-10,-400.00,ACTIVE
 M026,"Delgado, Sofia R.",03-0759-0901567-00,PROPERTY_PURCHASE,"Purchase of 14 Kauri Point Road, Herne Bay",2026-02-10,,2026-06-15,1500.00,ACTIVE
+M027,Estate of B. Calloway (dec.),01-0748-0345789-00,ESTATE,"Administration of estate - Calloway [ERR-18: phantom invoice reference, see L068]",2026-06-15,,2026-06-24,3000.00,ACTIVE
+M028,Estate of H. Okafor (dec.),12-3055-0567234-00,ESTATE,"Administration of estate - Okafor [ERR-19: OVERDRAWN - persistent, uncorrected across several entries, see M029]",2026-01-15,,2026-05-25,-4500.00,ACTIVE
+M029,Estate of P. Vaisigano (dec.),38-9033-0678345-00,ESTATE,Administration of estate - Vaisigano,2026-01-20,,2026-05-20,4000.00,ACTIVE

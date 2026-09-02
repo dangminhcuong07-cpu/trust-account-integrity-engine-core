@@ -527,9 +527,12 @@ class TestFundsTrailSyntheticData:
     def test_payment_summary_totals(self):
         trail = self._trail()
         ps = trail["payment_summary"]
-        assert ps["total"] == 5, f"Expected 5 fee/disbursement entries, got {ps['total']}"
+        # 6 fee/disbursement entries: L037 (NO_INVOICE_REF, R07 domain - not
+        # counted in either bucket), L038 (PROVEN), L039/L040/L041 (EXCEPTION),
+        # L068 (EXCEPTION - ERR-18, phantom invoice reference INV-88801)
+        assert ps["total"] == 6, f"Expected 6 fee/disbursement entries, got {ps['total']}"
         assert ps["proven"] == 1, f"Expected 1 proven payment, got {ps['proven']}"
-        assert ps["exception"] == 3, f"Expected 3 exception payments, got {ps['exception']}"
+        assert ps["exception"] == 4, f"Expected 4 exception payments, got {ps['exception']}"
 
     def test_receipt_summary_totals(self):
         trail = self._trail()

@@ -10,6 +10,8 @@ Usage:
 
 from __future__ import annotations
 
+import datetime
+
 from integrity_engine.rules.base import RuleProtocol
 from trust_domain.rules.types import TrustRuleResult  # re-exported for callers
 
@@ -155,6 +157,7 @@ def load_trust_rules_from_config(
     invoice_register: list | None = None,
     allocations: list | None = None,
     client_ledger: list | None = None,
+    reference_date: datetime.date | None = None,
 ) -> list[RuleProtocol]:
     """
     Build trust-domain rule callables from a list of rule-spec dicts.
@@ -170,6 +173,16 @@ def load_trust_rules_from_config(
       allocations       required for R12; defaults to empty list
       client_ledger     optional for R12 ledger-entry existence checks
 
+    reference_date (keyword-only):
+      The "as at" date the ageing rules (R02, R04, R05, R06) measure
+      against. run.py passes the run's generated_at date so that a report
+      is internally consistent (every day-count is relative to the date
+      printed on the report) and reproducible (re-running the same data
+      with the same generated_at gives the same findings). If None, each
+      ageing rule falls back to datetime.date.today() — acceptable for
+      ad-hoc interactive use, but NOT reproducible; see PROJECT_SNAPSHOT.md
+      known issue #3 for the history of this parameter.
+
     Example:
         load_trust_rules_from_config(
             [{"rule_id": "R02_DORMANT_BALANCE", "dormancy_days": 180}],
@@ -183,19 +196,23 @@ def load_trust_rules_from_config(
         rid = spec["rule_id"]
         if rid == "R02_DORMANT_BALANCE":
             rules.append(_r02.make_dormant_rule(
-                max_inactive_days=spec.get("dormancy_days", 365)
+                max_inactive_days=spec.get("dormancy_days", 365),
+                reference_date=reference_date,
             ))
         elif rid == "R04_UNMATCHED_BANK_LINE":
             rules.append(_r04.make_unmatched_rule(
-                max_age_days=spec.get("age_days", 5)
+                max_age_days=spec.get("age_days", 5),
+                reference_date=reference_date,
             ))
         elif rid == "R05_UNRECONCILED_AGEING":
             rules.append(_r05.make_ageing_rule(
-                max_days=spec.get("age_days", 30)
+                max_days=spec.get("age_days", 30),
+                reference_date=reference_date,
             ))
         elif rid == "R06_FIT_OVERHELD":
             rules.append(_r06.make_fit_rule(
-                max_days=spec.get("fit_days", 14)
+                max_days=spec.get("fit_days", 14),
+                reference_date=reference_date,
             ))
         elif rid == "R08_FEE_INVOICE_MISSING":
             rules.append(_r08.make_fee_invoice_missing_rule(_inv_reg))

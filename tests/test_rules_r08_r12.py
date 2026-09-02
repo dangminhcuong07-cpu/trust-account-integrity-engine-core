@@ -187,13 +187,24 @@ class TestR08FeeInvoiceMissing:
         assert any(res.record_id == "L039" for res in failures), \
             "ERR-8 (L039) not caught by R08_FEE_INVOICE_MISSING"
 
-    def test_only_one_violation_in_synthetic_data(self):
+    def test_catches_err18_phantom_invoice_from_synthetic_data(self):
+        # ERR-18: L068 references INV-88801, which is well-formed (passes R07)
+        # but absent from invoice_register - modeled on the NZLS Kejriwal
+        # decision (fabricated invoice used to authorise a disbursement).
         invoices = _load("invoice_register")
         rule = _r08.make_fee_invoice_missing_rule(invoices)
         ledger = _load("client_ledger")
         failures = [rule(r) for r in ledger if not rule(r).passed]
-        assert len(failures) == 1, \
-            f"Expected 1 R08 violation, got: {[f.record_id for f in failures]}"
+        assert any(res.record_id == "L068" for res in failures), \
+            "ERR-18 (L068) not caught by R08_FEE_INVOICE_MISSING"
+
+    def test_only_two_violations_in_synthetic_data(self):
+        invoices = _load("invoice_register")
+        rule = _r08.make_fee_invoice_missing_rule(invoices)
+        ledger = _load("client_ledger")
+        failures = [rule(r) for r in ledger if not rule(r).passed]
+        assert {f.record_id for f in failures} == {"L039", "L068"}, \
+            f"Expected exactly L039, L068; got: {[f.record_id for f in failures]}"
 
 
 # ── R09: Fee Exceeds Invoice ──────────────────────────────────────────────────

@@ -210,12 +210,36 @@ class TestR01OverdrawnLedger:
                     if not res.passed]
         assert failures == [], f"M026 (clean complement) should never overdraw, got: {[f.record_id for f in failures]}"
 
-    def test_only_three_violations_in_synthetic_data(self):
+    def test_catches_err19_persistent_overdraw_from_synthetic_data(self):
+        """ERR-19: modeled on the NZLS David Small decision (client trust
+        account overdrawn for over a year via repeated unauthorised
+        withdrawals). Unlike ERR-15 (which crosses into deficit once and
+        stops), the deficit here persists uncorrected across three entries
+        (L071, L072, L073) - R01 must flag all three, not just the first."""
         records = _load("client_ledger")
         failures = [res for res in [_r01.overdrawn_ledger(r) for r in records]
                     if not res.passed]
-        assert len(failures) == 3, f"Expected 3 violations, got: {[f.record_id for f in failures]}"
-        assert {f.record_id for f in failures} == {"L021", "L053", "L061"}
+        failed_ids = {res.record_id for res in failures}
+        assert {"L071", "L072", "L073"} <= failed_ids, \
+            f"ERR-19 (L071, L072, L073) not fully caught by R01_OVERDRAWN_CLIENT_LEDGER, got: {failed_ids}"
+
+    def test_m029_clean_complement_never_overdrawn(self):
+        """Clean complement to ERR-19: several substantial legitimate
+        distributions over consecutive months, balance never goes negative."""
+        records = _load("client_ledger")
+        m029_entries = [r for r in records if r.data.get("matter_ref") == "M029"]
+        failures = [res for res in [_r01.overdrawn_ledger(r) for r in m029_entries]
+                    if not res.passed]
+        assert failures == [], f"M029 (clean complement) should never overdraw, got: {[f.record_id for f in failures]}"
+
+    def test_only_six_violations_in_synthetic_data(self):
+        records = _load("client_ledger")
+        failures = [res for res in [_r01.overdrawn_ledger(r) for r in records]
+                    if not res.passed]
+        assert len(failures) == 6, f"Expected 6 violations, got: {[f.record_id for f in failures]}"
+        assert {f.record_id for f in failures} == {
+            "L021", "L053", "L061", "L071", "L072", "L073",
+        }
 
 
 # ── R02: Dormant balance ──────────────────────────────────────────────────────
@@ -309,10 +333,27 @@ class TestR03ReconBreak:
         assert any(res.record_id == "R002" for res in failures), \
             "ERR-4 (R002) not caught by R03_RECON_BREAK"
 
-    def test_only_one_violation_in_synthetic_data(self):
+    def test_catches_err17_false_certification_from_synthetic_data(self):
+        # ERR-17: R004 is falsely marked status=AGREED and difference_nzd=$0.00
+        # (modeled on the NZLS Stirling decision - false trust account
+        # compliance certificates). R03 must not trust the stored status/
+        # difference_nzd fields and must catch the true recomputed mismatch.
         records = _load("reconciliation_summary")
         failures = [res for res in [_r03.recon_break(r) for r in records] if not res.passed]
-        assert len(failures) == 1, f"Expected 1 violation, got: {[f.record_id for f in failures]}"
+        assert any(res.record_id == "R004" for res in failures), \
+            "ERR-17 (R004) not caught by R03_RECON_BREAK despite false AGREED status"
+
+    def test_r005_clean_complement_passes(self):
+        records = _load("reconciliation_summary")
+        r005 = next(r for r in records if r.record_id == "R005")
+        assert _r03.recon_break(r005).passed, \
+            "R005 (genuinely reconciled, correctly certified AGREED) should pass R03"
+
+    def test_only_two_violations_in_synthetic_data(self):
+        records = _load("reconciliation_summary")
+        failures = [res for res in [_r03.recon_break(r) for r in records] if not res.passed]
+        assert {f.record_id for f in failures} == {"R002", "R004"}, \
+            f"Expected exactly R002, R004; got: {[f.record_id for f in failures]}"
 
 
 # ── R04: Unmatched bank line ──────────────────────────────────────────────────
@@ -679,10 +720,10 @@ def _collect_all_violations() -> list[TrustRuleResult]:
 
 class TestIntegration:
 
-    def test_exactly_9_violations_total(self):
+    def test_exactly_13_violations_total(self):
         violations = _collect_all_violations()
         ids = [(v.rule_id, v.record_id) for v in violations]
-        assert len(violations) == 9, f"Expected 9 violations, got {len(violations)}: {ids}"
+        assert len(violations) == 13, f"Expected 13 violations, got {len(violations)}: {ids}"
 
     def test_violation_record_ids_match_expected_errors(self):
         violations = _collect_all_violations()
@@ -691,8 +732,12 @@ class TestIntegration:
             ("R01_OVERDRAWN_CLIENT_LEDGER",   "L021"),
             ("R01_OVERDRAWN_CLIENT_LEDGER",   "L053"),
             ("R01_OVERDRAWN_CLIENT_LEDGER",   "L061"),
+            ("R01_OVERDRAWN_CLIENT_LEDGER",   "L071"),
+            ("R01_OVERDRAWN_CLIENT_LEDGER",   "L072"),
+            ("R01_OVERDRAWN_CLIENT_LEDGER",   "L073"),
             ("R02_DORMANT_BALANCE",            "M017"),
             ("R03_RECON_BREAK",                "R002"),
+            ("R03_RECON_BREAK",                "R004"),
             ("R04_UNMATCHED_BANK_LINE",        "B031"),
             ("R05_UNRECONCILED_AGEING",        "L009"),
             ("R06_FIT_OVERHELD",               "M021"),

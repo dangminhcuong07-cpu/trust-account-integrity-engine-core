@@ -126,6 +126,10 @@ def run_pipeline(
             invoice_register=_invoice_register,
             allocations=_allocations,
             client_ledger=datasets.get("client_ledger"),
+            # Ageing rules measure "as at" the report's own generated_at
+            # date, not the wall clock — keeps day-counts consistent with
+            # the date printed on the report and makes runs reproducible.
+            reference_date=generated_at.date(),
         )[0]
         results = [rule_fn(r) for r in records]
         rule_violations = [res for res in results if not res.passed]
@@ -235,9 +239,26 @@ def main() -> None:
         required=True,
         help="Path to a .toml client config file.",
     )
+    parser.add_argument(
+        "--as-at",
+        metavar="YYYY-MM-DD",
+        default=None,
+        help=(
+            "Report date. Ageing rules (R02/R04/R05/R06) measure item age as "
+            "at this date and the report is stamped with it. Defaults to now. "
+            "Use a fixed date (e.g. the period end) for reproducible results."
+        ),
+    )
     args = parser.parse_args()
 
-    generated_at = datetime.datetime.now()
+    if args.as_at:
+        try:
+            as_at = datetime.date.fromisoformat(args.as_at)
+        except ValueError:
+            parser.error(f"--as-at must be YYYY-MM-DD, got {args.as_at!r}")
+        generated_at = datetime.datetime.combine(as_at, datetime.time(0, 0, 0))
+    else:
+        generated_at = datetime.datetime.now()
     result = run_pipeline(
         config_path=Path(args.config),
         generated_at=generated_at,

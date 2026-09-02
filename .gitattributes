@@ -1,0 +1,10 @@
+# Keep the generated sample CSVs byte-identical across OSes: the synthetic
+# generator writes LF, and the committed files are LF. Without this, a Windows
+# checkout with core.autocrlf=true rewrites them to CRLF and every pytest run
+# (which regenerates them) shows all six as modified. (Known issue #5.)
+*.csv text eol=lf
+
+# The hostile-input fixture is deliberately kept as a real Windows-style
+# export (CRLF). Do not normalise it — that would remove one of the very
+# traits it exists to exercise.
+tests/fixtures/hostile_input/*.csv -text

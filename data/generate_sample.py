@@ -295,7 +295,7 @@ RECON_ROWS = [
 
 def _write_csv(path: Path, headers: list, rows: list) -> int:
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, lineterminator="\n")  # match committed LF samples (known issue #5)
         writer.writerow(headers)
         writer.writerows(rows)
     return len(rows)
