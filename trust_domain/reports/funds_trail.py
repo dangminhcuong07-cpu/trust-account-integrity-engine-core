@@ -17,8 +17,8 @@ Per matter, the report covers two legs:
 Credits where no matter can be determined go to unattributed_receipts.
 Debit bank-statement lines are excluded from the receipt leg.
 
-Citation status: PROVISIONAL - pending verification against legislation.govt.nz
-by the maintainer.
+This report cites no regulation of its own; rule_id values it surfaces
+(R08/R09/R10) carry their citations in the respective rule modules.
 
 Usage:
     from trust_domain.reports.funds_trail import write_funds_trail
@@ -43,6 +43,7 @@ import re
 from pathlib import Path
 
 from integrity_engine.core.types import Record
+from trust_domain.reports.sanitize import sanitize_for_spreadsheet
 
 _FEE_TERMS = ("fee", "disbursement")
 _INV_RE = re.compile(r"^INV-\d{5}$")
@@ -458,9 +459,18 @@ def _build_markdown(trail: dict) -> str:
                 "-----------------|-------|"
             )
             for r in receipts:
+                # bank_line_id and ledger_entry_id are raw, user-controlled
+                # CSV-sourced record identifiers (bank statement / client
+                # ledger record ids) — same CSV-formula-injection shape as
+                # the 'reference' field, just not one of the three fields
+                # named in the original sanitization pass. See
+                # PROJECT_SNAPSHOT.md known issue #6 and
+                # trust_domain/reports/sanitize.py.
+                safe_bank_line_id = sanitize_for_spreadsheet(r['bank_line_id'])
+                safe_ledger_entry_id = sanitize_for_spreadsheet(r['ledger_entry_id'])
                 lines.append(
-                    f"| {r['bank_line_id']} "
-                    f"| {r['ledger_entry_id'] or '—'} "
+                    f"| {safe_bank_line_id} "
+                    f"| {safe_ledger_entry_id or '—'} "
                     f"| {r['transaction_date']} "
                     f"| ${r['amount_nzd']:,.2f} "
                     f"| {r['bank_line_status']} "
@@ -490,12 +500,29 @@ def _build_markdown(trail: dict) -> str:
                     if p["invoice_amount_nzd"] is not None
                     else "—"
                 )
+                # p['reference'] is raw, user-controlled ledger data (only
+                # constrained to a safe INV-NNNNN shape once it's matched to
+                # an invoice — see _payment_fields' NO_INVOICE_REF branch,
+                # where it's echoed unconstrained) — sanitize before it
+                # becomes the entire content of a spreadsheet cell.
+                # See trust_domain/reports/sanitize.py.
+                safe_reference = sanitize_for_spreadsheet(p['reference'])
+                # entry_id is a raw client_ledger record id (same shape as
+                # bank_line_id/ledger_entry_id below — known issue #6).
+                # invoice_id is set to the same raw `reference` value as
+                # safe_reference above (see _payment_fields) — sanitizing
+                # reference but leaving invoice_id raw two columns later in
+                # the same row would be an inconsistent, easily-missed gap,
+                # so it gets the same treatment here even though it wasn't
+                # separately named in known issue #6.
+                safe_entry_id = sanitize_for_spreadsheet(p['entry_id'])
+                safe_invoice_id = sanitize_for_spreadsheet(p['invoice_id'])
                 lines.append(
-                    f"| {p['entry_id']} "
+                    f"| {safe_entry_id} "
                     f"| {p['entry_date']} "
                     f"| ${p['payment_nzd']:,.2f} "
-                    f"| {p['reference'] or '—'} "
-                    f"| {p['invoice_id'] or '—'} "
+                    f"| {safe_reference or '—'} "
+                    f"| {safe_invoice_id or '—'} "
                     f"| {inv_amt} "
                     f"| {p['invoice_issue_date'] or '—'} "
                     f"| {p['status']} "
@@ -522,9 +549,11 @@ def _build_markdown(trail: dict) -> str:
             "--------|-------|"
         )
         for r in trail["unattributed_receipts"]:
+            safe_bank_line_id = sanitize_for_spreadsheet(r['bank_line_id'])
+            safe_ledger_entry_id = sanitize_for_spreadsheet(r['ledger_entry_id'])
             lines.append(
-                f"| {r['bank_line_id']} "
-                f"| {r['ledger_entry_id'] or '—'} "
+                f"| {safe_bank_line_id} "
+                f"| {safe_ledger_entry_id or '—'} "
                 f"| {r['transaction_date']} "
                 f"| ${r['amount_nzd']:,.2f} "
                 f"| {r['bank_line_status']} "
