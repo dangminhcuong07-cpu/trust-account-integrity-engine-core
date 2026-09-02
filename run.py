@@ -126,6 +126,18 @@ def run_pipeline(
             invoice_register=_invoice_register,
             allocations=_allocations,
             client_ledger=datasets.get("client_ledger"),
+            # R03 secondary bank-balance cross-check: verifies stored
+            # bank_balance_nzd against the bank statement's own running
+            # balance, catching fabricated matching values in the summary.
+            # PREREQUISITE: the bank statement's running_balance_nzd must
+            # be computed in chronological date order.  The synthetic sample
+            # generator computes running balances in CSV insertion order, so
+            # the seeded out-of-sequence entries (B052–B055) carry stale
+            # balances that would produce false positives on clean periods.
+            # This is enabled (bank_statement supplied) once the generator is
+            # updated to recompute running_balance_nzd in date order — at
+            # that point replace None with datasets["trust_bank_statement"].
+            bank_statement=None,
             # Ageing rules measure "as at" the report's own generated_at
             # date, not the wall clock — keeps day-counts consistent with
             # the date printed on the report and makes runs reproducible.
