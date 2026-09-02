@@ -1,0 +1,42 @@
+name: Windows Test Suite
+
+# Runs the pytest suite on an actual windows-latest GitHub-hosted runner —
+# a real Windows Python process, not the Linux bridge shell used for local
+# device-assisted development. Exists specifically to catch OS-dependent
+# behaviour (line endings, path separators) before it reaches a real trial
+# firm's Windows machine, and to give repeatable proof (every push) rather
+# than a one-off manual check.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.11: broad-compatibility floor (requirements.txt still guards
+        # tomli for python_version < "3.11"). 3.14: matches the version
+        # actually installed in the local dev venv on the Windows machine.
+        python-version: ["3.11", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create virtual environment
+        run: python -m venv venv
+
+      - name: Install dependencies
+        run: |
+          venv\Scripts\python.exe -m pip install --upgrade pip
+          venv\Scripts\python.exe -m pip install -r requirements.txt
+
+      - name: Run test suite
+        run: venv\Scripts\python.exe -m pytest tests/ -v
