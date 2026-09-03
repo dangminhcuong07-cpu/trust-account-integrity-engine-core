@@ -51,11 +51,11 @@ tests/                          545 pytest tests
 | R04 | Bank line with no matching ledger entry | CRITICAL |
 | R05 | Unreconciled ledger entry > age threshold | CRITICAL |
 | R06 | FIT balance held beyond transfer deadline | CRITICAL |
-| R07 | Fee/disbursement entry lacks invoice reference | WARNING |
-| R08 | Fee invoice reference not found in invoice register | WARNING |
-| R09 | Fee payment exceeds authorised invoice amount | WARNING |
-| R10 | Invoice issue date is after the fee payment date | WARNING |
-| R12 | Bulk bank deposit not fully allocated to client ledger | WARNING |
+| R07 | Fee/disbursement entry lacks invoice reference | HIGH |
+| R08 | Fee invoice reference not found in invoice register | HIGH |
+| R09 | Fee payment exceeds authorised invoice amount | HIGH |
+| R10 | Invoice issue date is after the fee payment date | HIGH |
+| R12 | Bulk bank deposit not fully allocated to client ledger | HIGH |
 | R13 | Trust bank account running balance goes negative | CRITICAL |
 
 ## Input datasets
