@@ -24,7 +24,7 @@ python run.py --config <config_path> [--as-at YYYY-MM-DD]
 
 After the run, report:
 - Total violations found
-- Count by severity (CRITICAL / WARNING)
+- Count by severity (CRITICAL / HIGH)
 - Location of key output files: `exception_report.pdf`, `evidence_pack.md`, `run_log.json`
 - Any WARNING: lines printed during the run (config validation issues)
 
@@ -38,4 +38,4 @@ To verify the engine is working, run against the included synthetic sample:
 python run.py --config trust_domain/config/coastal_law.toml --as-at 2026-06-25
 ```
 
-Expected: 23 violations (14 CRITICAL, 9 WARNING). Output goes to `output/coastal_law/`.
+Expected: 23 violations (14 CRITICAL, 9 HIGH). Output goes to `output/coastal_law/`.
