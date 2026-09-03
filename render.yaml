@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: trust-account-engine-demo
+    runtime: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120 --workers 2
+    envVars:
+      - key: FLASK_ENV
+        value: production

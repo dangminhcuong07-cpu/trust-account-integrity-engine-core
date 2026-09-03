@@ -7,3 +7,7 @@ openpyxl>=3.1
 flask>=3.0
 pytest>=8.0
 tomli>=2.0; python_version < "3.11"
+
+# Render deployment only (see render.yaml) — not part of the on-premise
+# CLI/webapp install path, so intentionally not mirrored into setup.py.
+gunicorn>=21.0
