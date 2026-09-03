@@ -368,7 +368,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:32px}
   </div>
   <div class="stat-card high">
     <div class="val">{{ summary.highCount }}</div>
-    <div class="lbl">HIGH / WARNING</div>
+    <div class="lbl">HIGH</div>
   </div>
   <div class="stat-card {% if rules_passed == rules_total %}pass{% else %}crit{% endif %}">
     <div class="val">{{ rules_passed }}/{{ rules_total }}</div>
@@ -422,7 +422,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:32px}
 
 <!-- Violations list -->
 {% if violations %}
-{% for sev_label, sev_key, badge_class in [('CRITICAL violations', 'CRITICAL', 'badge-crit'), ('HIGH / WARNING violations', 'WARNING', 'badge-high')] %}
+{% for sev_label, sev_key, badge_class in [('CRITICAL violations', 'CRITICAL', 'badge-crit'), ('HIGH violations', 'WARNING', 'badge-high')] %}
 {% set sev_violations = violations | selectattr('severity', 'equalto', sev_key) | list %}
 {% if sev_violations %}
 <div class="section">
@@ -435,7 +435,8 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:32px}
     <div class="v-head">
       <span class="v-id">{{ v.sourceRecordId }}</span>
       <span class="v-rule">{{ v.ruleName }}</span>
-      <span class="sev-pill sev-{{ v.severity }}">{{ v.severity }}</span>
+      {% set display_sev = 'HIGH' if v.severity == 'WARNING' else v.severity %}
+      <span class="sev-pill sev-{{ display_sev }}">{{ display_sev }}</span>
     </div>
     <div class="v-evidence">{{ v.evidence }}</div>
     <div class="v-ref">{{ v.nzLawSocietyRule }}</div>

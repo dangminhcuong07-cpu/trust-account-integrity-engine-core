@@ -33,7 +33,7 @@ def main() -> None:
     print(f"Python {sys.version_info.major}.{sys.version_info.minor} -- OK")
 
     # 2. Install dependencies
-    packages = ["reportlab", "openpyxl"]
+    packages = ["reportlab", "openpyxl", "flask"]
     if sys.version_info < (3, 11):
         packages.append("tomli")
 
