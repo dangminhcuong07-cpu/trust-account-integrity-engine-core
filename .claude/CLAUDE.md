@@ -1,4 +1,4 @@
-# Trust Account Integrity Engine — Claude Code Project Brief
+# TrustSentry — Claude Code Project Brief
 
 ## What this project is
 
