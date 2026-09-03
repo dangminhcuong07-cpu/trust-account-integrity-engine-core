@@ -46,3 +46,7 @@ plan to marketise/
 
 # --- legal drafts: NEVER commit (repo is public) ---
 legal/
+
+# PyInstaller build artifacts
+build/
+.claude/settings.local.json
