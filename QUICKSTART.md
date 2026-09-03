@@ -42,17 +42,26 @@ Writes six CSVs to `data/sample/`:
 `matter_register`, `client_ledger`, `trust_bank_statement`,
 `reconciliation_summary`, `invoice_register`, `allocations`.
 
-The dataset contains **17 seeded error scenarios across the 12 supported
+The dataset contains **22 seeded error records across the 12 supported
 rules** (R12 has three variants: under-allocated, over-allocated, and
-zero-allocation bulk deposits) and clean complements for every rule.
+zero-allocation bulk deposits; five scenarios are modelled on real NZLS
+Disciplinary Tribunal decisions, with demo figures) and clean complements
+for every rule.
 
 ---
 
 ## 4. Run the engine
 
 ```bash
-python run.py --config trust_domain/config/coastal_law.toml
+python run.py --config trust_domain/config/coastal_law.toml --as-at 2026-06-25
 ```
+
+`--as-at` is the report date. The four ageing rules (R02/R04/R05/R06)
+measure how old an item is *as at that date*, so a fixed date gives a
+reproducible result. Leave it off and the engine uses today's date — which
+is what you want for a real monthly run, but it means the sample's ageing
+findings will grow as the calendar moves on (one more bank line trips the
+5-day R04 threshold from 2026-06-29 onward).
 
 All outputs land in `output/coastal_law/`:
 
@@ -72,14 +81,14 @@ All outputs land in `output/coastal_law/`:
 ## 5. Expected result
 
 ```
-Run complete - 19 violations found (10 CRITICAL, 9 HIGH)
+Run complete - 23 violations found (14 CRITICAL, 9 HIGH)
 Output written to: output/coastal_law
 Exception report: output/coastal_law/exception_report.pdf
 Evidence pack:    output/coastal_law/evidence_pack.md
 Run log:          output/coastal_law/run_log.json
 ```
 
-The 19 violations are deterministic — same ledger always produces the same report.
+The 23 violations are deterministic — the same ledger with the same `--as-at` date always produces the same report.
 
 ---
 
@@ -89,7 +98,7 @@ The 19 violations are deterministic — same ledger always produces the same rep
 pytest
 ```
 
-Expected: **468 passed, 0 failed, 0 skipped**.
+Expected: **531 passed, 0 failed, 0 skipped**.
 
 ---
 

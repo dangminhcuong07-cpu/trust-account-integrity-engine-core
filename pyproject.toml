@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=83.0.0"]  # PYSEC-2026-3447 fix floor; build-time only, see PROJECT_SNAPSHOT.md known issue #7
 build-backend = "setuptools.backends.legacy:build"
 
 [project]

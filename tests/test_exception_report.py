@@ -2,9 +2,11 @@
 Tests for trust_domain.reports.exception_report (Step 2.3).
 
 Reference date throughout: 2026-06-25.
-9 seeded violations (R01-R07 scope; R01 now catches 3: L021, L053, L061 -
-see ERR-14a and ERR-15 in trust_domain/synthetic/generator.py) are exercised
-via the trust_domain synthetic data.
+13 seeded violations (R01-R07 scope; R01 catches 6: L021, L053, L061, L071,
+L072, L073 - L071-L073 are ERR-19, see trust_domain/synthetic/generator.py;
+R03 catches 2: R002, R004 - R004 is ERR-17, see
+trust_domain/synthetic/generator.py) are exercised via the trust_domain
+synthetic data.
 """
 
 from __future__ import annotations
@@ -35,7 +37,7 @@ def trust_sample_data():
     generate(SAMPLE_DIR)
 
 
-# ── Collect all 9 violations from synthetic data ──────────────────────────────
+# ── Collect all 13 violations from synthetic data ──────────────────────────────
 
 def _all_violations() -> list[TrustRuleResult]:
     from data.load_sample import load_file
@@ -84,13 +86,14 @@ def _viol(rule_id: str, record_id: str, severity: str,
 
 class TestBuildReportDict:
 
-    def test_total_violations_9(self):
+    def test_total_violations_13(self):
         d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
-        assert d["total_violations"] == 9
+        assert d["total_violations"] == 13
 
-    def test_critical_count_is_4(self):
+    def test_critical_count_is_8(self):
         d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
-        assert d["critical_count"] == 4   # R01 x3 (L021, L053, L061) + R03
+        # R01 x6 (L021, L053, L061, L071, L072, L073) + R03 x2 (R002, R004)
+        assert d["critical_count"] == 8
 
     def test_high_count_is_5(self):
         d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
@@ -113,7 +116,7 @@ class TestBuildReportDict:
     def test_rank_is_1_based_sequential(self):
         d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
         ranks = [v["rank"] for v in d["violations"]]
-        assert ranks == list(range(1, 10))
+        assert ranks == list(range(1, 14))
 
     def test_all_violation_fields_populated(self):
         d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
@@ -267,7 +270,7 @@ class TestWriteReport:
     def test_returns_dict_with_correct_total(self, tmp_path):
         out = tmp_path / "report.md"
         d   = write_report(_all_violations(), PERIOD, FIRM, REF_DATE, out)
-        assert d["total_violations"] == 9
+        assert d["total_violations"] == 13
 
     def test_creates_nested_parent_directories(self, tmp_path):
         out = tmp_path / "trust" / "reports" / "2026" / "may.md"

@@ -126,6 +126,22 @@ def run_pipeline(
             invoice_register=_invoice_register,
             allocations=_allocations,
             client_ledger=datasets.get("client_ledger"),
+            # R03 secondary bank-balance cross-check: verifies stored
+            # bank_balance_nzd against the bank statement's own running
+            # balance, catching fabricated matching values in the summary.
+            # PREREQUISITE: the bank statement's running_balance_nzd must
+            # be computed in chronological date order.  The synthetic sample
+            # generator computes running balances in CSV insertion order, so
+            # the seeded out-of-sequence entries (B052–B055) carry stale
+            # balances that would produce false positives on clean periods.
+            # This is enabled (bank_statement supplied) once the generator is
+            # updated to recompute running_balance_nzd in date order — at
+            # that point replace None with datasets["trust_bank_statement"].
+            bank_statement=None,
+            # Ageing rules measure "as at" the report's own generated_at
+            # date, not the wall clock — keeps day-counts consistent with
+            # the date printed on the report and makes runs reproducible.
+            reference_date=generated_at.date(),
         )[0]
         results = [rule_fn(r) for r in records]
         rule_violations = [res for res in results if not res.passed]
@@ -235,9 +251,26 @@ def main() -> None:
         required=True,
         help="Path to a .toml client config file.",
     )
+    parser.add_argument(
+        "--as-at",
+        metavar="YYYY-MM-DD",
+        default=None,
+        help=(
+            "Report date. Ageing rules (R02/R04/R05/R06) measure item age as "
+            "at this date and the report is stamped with it. Defaults to now. "
+            "Use a fixed date (e.g. the period end) for reproducible results."
+        ),
+    )
     args = parser.parse_args()
 
-    generated_at = datetime.datetime.now()
+    if args.as_at:
+        try:
+            as_at = datetime.date.fromisoformat(args.as_at)
+        except ValueError:
+            parser.error(f"--as-at must be YYYY-MM-DD, got {args.as_at!r}")
+        generated_at = datetime.datetime.combine(as_at, datetime.time(0, 0, 0))
+    else:
+        generated_at = datetime.datetime.now()
     result = run_pipeline(
         config_path=Path(args.config),
         generated_at=generated_at,

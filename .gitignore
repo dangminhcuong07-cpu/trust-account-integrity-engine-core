@@ -34,10 +34,19 @@ Mockup 2.zip
 
 # --- Tool artefacts ---
 .playwright-mcp/
-.claude/
-CLAUDE.md
 
 # --- OS / editor ---
 .DS_Store
 Thumbs.db
 *.swp
+Velocity $100k Judging Criteria 2026.pdf
+Velocity Challenges Rules 2026 (1).pdf
+Velocity/
+plan to marketise/
+
+# --- legal drafts: NEVER commit (repo is public) ---
+legal/
+
+# PyInstaller build artifacts
+build/
+.claude/settings.local.json

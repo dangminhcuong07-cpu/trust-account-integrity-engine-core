@@ -25,6 +25,20 @@ targeted changes required to exercise all trust-domain rules:
                                            modeled on the NZLS "Ms M" disciplinary decision
   ERR-16 R13_BANK_BALANCE_OVERDRAWN     — B055, gradual bank-side deficit via 4 smaller
                                            debits, same "Ms M" pattern applied to R13
+  ERR-17 R03_RECON_BREAK                — R004, period falsely certified AGREED with a
+                                           falsely-stated $0.00 difference_nzd, modeled on
+                                           the NZLS Takena Stirling disciplinary decision
+                                           (false trust account compliance certificates)
+  ERR-18 R08_FEE_INVOICE_MISSING        — L068, disbursement authorised by a well-formed
+                                           invoice reference (INV-88801) absent from
+                                           invoice_register, modeled on the NZLS Mehal
+                                           Kejriwal disciplinary decision (fabricated
+                                           invoice used to authorise a disbursement)
+  ERR-19 R01_OVERDRAWN_CLIENT_LEDGER    — L071/L072/L073, persistent uncorrected overdraw
+                                           across three entries (not a single crossing),
+                                           modeled on the NZLS David Small disciplinary
+                                           decision (trust account overdrawn ~$55,000 for
+                                           over a year via repeated unauthorised withdrawals)
 
 Key differences from data/generate_sample.py (DO NOT MODIFY THAT FILE):
   - LEDGER_HEADERS gains a "reference" column (all existing rows get "")
@@ -52,6 +66,12 @@ Key differences from data/generate_sample.py (DO NOT MODIFY THAT FILE):
   - L052-L066 added (client_ledger rows for M022-M026)
   - B052-B056 added (bank-only ERR-16 seed: gradual unauthorised-transfer pattern
     with no client-ledger counterpart — see comment block)
+  - RECON_ROWS gains R004/R005 (ERR-17 seed + clean complement — see comment
+    block above RECON_ROWS for provenance and design notes)
+  - M027 added (ERR-18 seed matter); L067-L068 added (client_ledger rows —
+    see comment block above M027)
+  - M028-M029 added (ERR-19 seed + clean complement); L069-L077 added
+    (client_ledger rows — see comment block above M028)
   - Output directory: trust_domain/synthetic/sample/
 
 Usage:
@@ -134,6 +154,28 @@ MATTER_ROWS = [
     ("M025", "Ferreira, Lucas M.",             "38-9022-0890456-00", "PROPERTY_PURCHASE", "Purchase of 21 Tawa Grove, Birkenhead [ERR-15: OVERDRAWN - gradual deficit via disguised transfers]", "2026-02-01", "", "2026-06-10", "-400.00", "ACTIVE"),
     # M026: clean complement to ERR-15 (4 smaller legitimate disbursements, never overdrawn)
     ("M026", "Delgado, Sofia R.",              "03-0759-0901567-00", "PROPERTY_PURCHASE", "Purchase of 14 Kauri Point Road, Herne Bay",        "2026-02-10", "", "2026-06-15", "1500.00",  "ACTIVE"),
+    # ── ERR-18: phantom-invoice disbursement, modeled on the NZLS decision
+    # "Lawyer struck off after altering invoices to obtain funds for her own
+    # benefit" (Mehal Kejriwal, 2022-NZLCDT-24, New Zealand Lawyers and
+    # Conveyancers Disciplinary Tribunal, published 1 Sep 2022, updated
+    # 22 Jul 2024, lawsociety.org.nz) — see the note on L068 below for what
+    # this engine's data model can and cannot represent about the case.
+    # M027 balance = 3000.00 (after L067 opening receipt and L068 disbursement)
+    ("M027", "Estate of B. Calloway (dec.)",   "01-0748-0345789-00", "ESTATE",            "Administration of estate - Calloway [ERR-18: phantom invoice reference, see L068]", "2026-06-15", "", "2026-06-24", "3000.00", "ACTIVE"),
+    # ── ERR-19: persistent, uncorrected trust-account overdraw via repeated
+    # unauthorised withdrawals, modeled on the NZLS decision "Former lawyer
+    # struck off for misappropriating client funds" (David Small, New Zealand
+    # Lawyers and Conveyancers Disciplinary Tribunal, published 5 Nov 2024,
+    # updated 7 Nov 2024, lawsociety.org.nz) — the Tribunal found Mr Small's
+    # sole-practice client trust account was overdrawn by roughly $55,000 for
+    # over a year via at least 24 unlawful transactions, several authorised by
+    # fictitious invoices to himself. See the note on L071-L073 below for how
+    # this differs in shape from ERR-2/ERR-14/ERR-15, and what is out of scope.
+    # M028 balance = -4500.00 (final balance after L073, the third overdrawn entry)
+    ("M028", "Estate of H. Okafor (dec.)",     "12-3055-0567234-00", "ESTATE",            "Administration of estate - Okafor [ERR-19: OVERDRAWN - persistent, uncorrected across several entries, see M029]", "2026-01-15", "", "2026-05-25", "-4500.00", "ACTIVE"),
+    # M029: clean complement to ERR-19 (repeated substantial withdrawals over
+    # several months, never overdrawn)
+    ("M029", "Estate of P. Vaisigano (dec.)",  "38-9033-0678345-00", "ESTATE",            "Administration of estate - Vaisigano", "2026-01-20", "", "2026-05-20", "4000.00", "ACTIVE"),
 ]
 
 
@@ -381,6 +423,89 @@ LEDGER_ROWS = [
      "costs), balance stays positive throughout - demonstrates that a gradual "
      "multi-transaction pattern alone, without a resulting deficit, is not "
      "flagged.", ""),
+    # ── ERR-18: phantom-invoice disbursement (Kejriwal pattern) — see comment
+    # above M027. No trust_bank_statement counterpart is added for L067-L068,
+    # consistent with the ledger-only seeding used for ERR-14/ERR-15.
+    ("L067", "M027", "2026-06-15", "Receipt - Estate funds received - Calloway estate",
+     "5000.00",   "0.00",      "5000.00",    "Y", "2026-06-17", "", ""),
+    # ERR-18: disbursement authorised by reference to an invoice that is
+    # well-formed (passes R07) but does not exist in invoice_register -
+    # triggers R08, the same mechanism as ERR-8 (L039), but modeled here on a
+    # verified real disciplinary decision rather than an invented shape.
+    ("L068", "M027", "2026-06-24", "Disbursement - Estate distribution payment (per invoice reference)",
+     "0.00",      "2000.00",   "3000.00",    "Y", "2026-06-25",
+     "ERR-18: payment authorised by reference to INV-88801, which does not "
+     "appear anywhere in invoice_register - $2,000.00 is a demo figure "
+     "invented for this dataset, not drawn from the real case. Modeled on the "
+     "pattern described in the NZLS Kejriwal decision (2022-NZLCDT-24, "
+     "'Lawyer struck off after altering invoices to obtain funds for her own "
+     "benefit'): the practitioner fabricated an invoice purporting to be from "
+     "another law firm to authorise redirecting a genuine estate distribution. "
+     "This engine's data model has no payee/beneficiary-account field, so it "
+     "cannot represent the payment-redirection mechanism itself (money routed "
+     "to the practitioner via a third party's account) - only the "
+     "phantom-invoice-reference aspect is represented, and that is what R08 "
+     "catches: a disbursement whose authorising invoice reference does not "
+     "exist in the genuine invoice register.", "INV-88801"),
+    # ── ERR-19: persistent, uncorrected overdraw (David Small pattern) — see
+    # comment above M028. No trust_bank_statement counterpart is added for
+    # L069-L077, consistent with the ledger-only seeding used for
+    # ERR-14/ERR-15/ERR-18. Descriptions deliberately avoid "fee"/
+    # "disbursement" so this scenario exercises R01 only, with no overlap
+    # onto R07/R08/R09/R10.
+    ("L069", "M028", "2026-01-15", "Receipt - Estate funds received - Okafor estate",
+     "10000.00",  "0.00",      "10000.00",   "Y", "2026-01-17", "", ""),
+    ("L070", "M028", "2026-02-10", "Payment - Withdrawal (unauthorised)",
+     "0.00",      "7000.00",   "3000.00",    "Y", "2026-02-12",
+     "ERR-19 (1 of 4): part of a series of unauthorised withdrawals from the "
+     "estate matter. Modeled on the pattern described in the NZLS decision "
+     "'Former lawyer struck off for misappropriating client funds' (David "
+     "Small, NZLCDT, published 5 Nov 2024, updated 7 Nov 2024): the "
+     "practitioner's sole-practice trust account was found overdrawn by "
+     "roughly $55,000 for over a year via at least 24 unlawful transactions, "
+     "several authorised by fictitious invoices to himself. The specific "
+     "dollar amounts and dates in this series (L069-L073) are demo figures "
+     "invented for this dataset and compressed into a few months, not drawn "
+     "from the real case or its actual timeframe.", ""),
+    # ERR-19 (2 of 4): this entry crosses into deficit - R01 catches it here.
+    ("L071", "M028", "2026-03-15", "Payment - Withdrawal (unauthorised)",
+     "0.00",      "6000.00",   "-3000.00",   "Y", "2026-03-17",
+     "ERR-19 (2 of 4): matter overdrawn by $3,000 after this withdrawal (a "
+     "demo figure, not from the real case - see the note on L070 for the "
+     "case citation).", ""),
+    # ERR-19 (3 of 4): deficit persists, uncorrected - unlike ERR-15 (which
+    # crosses into deficit once and stops), this models the Small decision's
+    # finding that the overdraw continued, uncorrected, across many further
+    # transactions - R01 correctly flags every row while the balance stays
+    # negative, not just the first crossing.
+    ("L072", "M028", "2026-04-20", "Payment - Withdrawal (unauthorised)",
+     "0.00",      "1000.00",   "-4000.00",   "Y", "2026-04-22",
+     "ERR-19 (3 of 4): deficit persists and deepens, uncorrected - see the "
+     "note on L070/L071. Demonstrates R01 continues to flag an overdrawn "
+     "matter across every subsequent entry until it is corrected, matching "
+     "the sustained (not single-event) overdraw described in the Small "
+     "decision.", ""),
+    ("L073", "M028", "2026-05-25", "Payment - Withdrawal (unauthorised)",
+     "0.00",      "500.00",    "-4500.00",   "Y", "2026-05-27",
+     "ERR-19 (4 of 4): deficit persists at matter close of period - $4,500 is "
+     "a demo figure, not from the real case (the actual finding was "
+     "approximately $55,000 overdrawn for over a year). See the note on L070 "
+     "for the full citation.", ""),
+    # Clean complement to ERR-19: repeated substantial withdrawals over several
+    # months, balance always stays positive - demonstrates that a series of
+    # large payments alone, without a resulting deficit, is not flagged.
+    ("L074", "M029", "2026-01-20", "Receipt - Estate funds received - Vaisigano estate",
+     "20000.00",  "0.00",      "20000.00",   "Y", "2026-01-22", "", ""),
+    ("L075", "M029", "2026-03-01", "Payment - Distribution to beneficiary",
+     "0.00",      "7000.00",   "13000.00",   "Y", "2026-03-03", "", ""),
+    ("L076", "M029", "2026-04-15", "Payment - Distribution to beneficiary",
+     "0.00",      "6000.00",   "7000.00",    "Y", "2026-04-17", "", ""),
+    ("L077", "M029", "2026-05-20", "Payment - Final distribution to beneficiary",
+     "0.00",      "3000.00",   "4000.00",    "Y", "2026-05-22",
+     "Clean complement to ERR-19: several substantial legitimate distributions "
+     "over consecutive months, balance stays positive throughout - "
+     "demonstrates that a series of large payments alone, without a resulting "
+     "deficit, is not flagged.", ""),
 ]
 
 
@@ -454,7 +579,9 @@ BANK_ROWS = [
     # matched_ledger_entry is set to a non-ledger sentinel on B044/B046/B047 so R04 skips them
     # (R04 only flags entries where matched_ledger_entry is empty).
     # B048 keeps matched="" — it is a genuine orphan breach (no match, no allocations),
-    # caught by R04 AND later by R12.
+    # caught by R12. R04 would ALSO flag it only once it is ≥5 days old relative to
+    # the run's reference date; at the canonical 2026-06-25 reference date it is
+    # 1 day old, so R04 correctly does not fire on it (see test_end_to_end.py).
     #
     # B044: credit $2,500 fully allocated to L047 via allocations.csv — R12 clean
     ("B044", _TA, "2026-06-24", "Credit - Multi-client bulk deposit (M020 portion)", "2500.00", "0.00",    "641825.00",  "BULK-ALLOCATED", "R12 clean: fully allocated via allocations.csv"),
@@ -465,7 +592,8 @@ BANK_ROWS = [
     # ERR-12b: credit $5,000 with allocations summing $5,500 — over-allocated
     ("B047", _TA, "2026-06-24", "Credit - Multi-client bulk deposit (M015/M018)", "5000.00",   "0.00",      "658825.00",  "BULK-MULTI",     "ERR-12b: allocations sum $5,500 > credit $5,000"),
     # ERR-12c: credit $15,000 with zero allocations and no matched_ledger_entry (orphan)
-    # This triggers R04 (unmatched bank line, old enough) AND R12 (no allocation, no match).
+    # This triggers R12 (no allocation, no match). R04 only fires on it once it is
+    # ≥5 days old relative to the reference date — not at 2026-06-25.
     ("B048", _TA, "2026-06-24", "Credit - Unallocated bulk deposit (source: M006 conveyancing)", "15000.00", "0.00", "673825.00", "",      "ERR-12c: $15,000 bulk credit with no allocation rows"),
     # B049: clean true-negative for R12 — $12,000 bulk deposit fully allocated to L049/L050/L051
     # allocations sum exactly equals credit: 4000 + 5000 + 3000 = 12000 (R12 PROVEN)
@@ -580,14 +708,48 @@ RECON_ROWS = [
     ("R003", "2026-05-31", "",           "",           "",
      "J. Anderson", "",            "IN PROGRESS",
      "ERR-5 (B031 $15,000 orphan credit) and ERR-1 (L009 unreconciled) both present in this period"),
+    # ── ERR-17: false certification of reconciliation, modeled on the NZLS
+    # decision "Lawyer struck off for misappropriation of funds" (Takena
+    # Stirling, New Zealand Lawyers and Conveyancers Disciplinary Tribunal,
+    # published 17 Aug 2023, updated 22 Jul 2024, lawsociety.org.nz): the
+    # Tribunal found Mr Stirling had filed false and misleading trust account
+    # compliance certificates covering April-July 2022, certifying the trust
+    # account as reconciled while it was persistently overdrawn. R03 does not
+    # trust the stored status/difference_nzd fields - it always recomputes
+    # (ledger_total_nzd - bank_balance_nzd) independently, so a period falsely
+    # marked AGREED with a falsely-stated $0.00 difference_nzd is still caught
+    # once the true underlying figures disagree. The $400.00 gap below is a
+    # demo figure invented for this dataset, not drawn from the real case,
+    # which does not disclose the exact size of the certified-but-unreconciled
+    # shortfall.
+    ("R004", "2026-06-30", "425300.00", "424900.00", "0.00",
+     "J. Anderson", "S. Mitchell", "AGREED",
+     "ERR-17: period falsely certified AGREED with difference_nzd falsely "
+     "stated as $0.00 - the true recomputed difference is $400.00 (a demo "
+     "figure, not from the real case). Modeled on the NZLS Stirling decision: "
+     "false trust account compliance certificates filed while the account was "
+     "not actually reconciled. R03 ignores the stored status/difference_nzd "
+     "and recomputes independently, so this false certification is caught."),
+    # Clean complement to ERR-17: genuinely reconciled period, correctly
+    # certified AGREED - demonstrates R03's independent recomputation does not
+    # raise a false positive when the certification is accurate.
+    ("R005", "2026-07-31", "430000.00", "430000.00", "0.00",
+     "J. Anderson", "S. Mitchell", "AGREED",
+     "Clean complement to ERR-17: genuinely reconciled period; recomputed "
+     "difference is actually $0.00, matching the (accurate) AGREED status."),
 ]
 
 
 # ── Writer ────────────────────────────────────────────────────────────────────
 
 def _write_csv(path: Path, headers: list, rows: list) -> int:
+    # lineterminator="\n" on purpose: csv.writer's default is "\r\n"
+    # (RFC 4180), but the committed sample files are LF. Without this, every
+    # test run regenerated the samples with CRLF and `git status` showed all
+    # six files as modified with zero content change (PROJECT_SNAPSHOT.md
+    # known issue #5). .gitattributes pins *.csv to LF for the same reason.
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, lineterminator="\n")
         writer.writerow(headers)
         writer.writerows(rows)
     return len(rows)
@@ -610,7 +772,7 @@ def generate(output_dir: Path) -> None:
         print(f"  {name}.csv  -  {n} rows")
 
     print("""
-Seeded errors (12 rule types, 17 seeded records):
+Seeded errors (12 rule types, 22 seeded records):
   ERR-1   Unreconciled entry > 30 days    ledger L009 / matter M008 / 89 days old
   ERR-2   Overdrawn client matter         ledger L021 / matter M016 / balance -$2,500
   ERR-3   Dormant matter with balance     matter M017 / balance $8,500 / last activity 2024-12-15
@@ -629,6 +791,9 @@ Seeded errors (12 rule types, 17 seeded records):
   ERR-14b Cross-matter correlation (credit)   ledger L055 / matter M023 / unexplained +$1,800 [demo figure] (not caught by R01)
   ERR-15  Gradual deficit (client ledger)     ledger L061 / matter M025 / balance -$400 after 4 transfers [demo figures; pattern modeled on NZLS "Ms M" decision]
   ERR-16  Gradual deficit (bank statement)    bank B055 / running balance -$575 after 4 debits [demo figures; pattern modeled on NZLS "Ms M" decision]
+  ERR-17  False reconciliation certification  recon R004 / period 2026-06-30 / falsely AGREED, true diff $400 [demo figure; pattern modeled on NZLS Takena Stirling decision]
+  ERR-18  Phantom invoice reference           ledger L068 / matter M027 / INV-88801 absent from register [demo figure; pattern modeled on NZLS Mehal Kejriwal decision]
+  ERR-19  Persistent uncorrected overdraw     ledger L071-L073 / matter M028 / balance -$4,500 after 3 further entries [demo figures; pattern modeled on NZLS David Small decision]
 """)
 
 

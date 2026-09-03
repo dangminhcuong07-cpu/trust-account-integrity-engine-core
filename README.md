@@ -1,6 +1,6 @@
 # Trust Account Integrity Engine
 
-A Python rules engine that checks NZ law firm trust account ledgers against the *Lawyers and Conveyancers Act (Trust Account) Regulations 2008*. It ingests CSV exports, evaluates eleven deterministic compliance rules, and produces a dated exception report, evidence pack, and per-matter funds-trail report with source evidence.
+A Python rules engine that checks NZ law firm trust account ledgers against the *Lawyers and Conveyancers Act (Trust Account) Regulations 2008*. It ingests CSV exports, evaluates twelve deterministic compliance rules, and produces a dated exception report, evidence pack, and per-matter funds-trail report with source evidence.
 
 **Live demo →** https://trust-account-integrity-engine.vercel.app/
 
@@ -20,7 +20,7 @@ LLMs are unreliable at multi-step arithmetic over large tables and produce non-d
 
 ## Verification Discipline
 
-R01–R07 citations were verified against legislation.govt.nz (reprint as at 1 Jul 2022), with the verification date recorded in each rule file's docstring. R02 and R06 were additionally verified against the NZLS Lawyers Trust Accounting Guidelines, June 2024. R08–R12 citations are **PROVISIONAL** — pending independent verification against legislation.govt.nz by the maintainer (see each rule file's docstring).
+Every shipped rule's citation (R01–R10, R12, R13) has been checked by the maintainer against legislation.govt.nz (reprint as at 1 Jul 2022), with the verification date recorded in each rule file's docstring. R02 and R06 were additionally checked against the NZLS Lawyers Trust Accounting Guidelines, June 2024. No citation is currently marked PROVISIONAL. This checking was done by the maintainer, who is not a lawyer; it is not a legal opinion and has not been reviewed by the Law Society or any trust-account reviewer.
 
 Citation strings used verbatim throughout the codebase:
 
@@ -109,7 +109,7 @@ pytest
 ## Limitations
 
 - Synthetic data only — not yet run against a real firm's production ledger.
-- Eleven rules cover a significant subset of the Regulations, not every obligation.
+- Twelve rules cover a significant subset of the Regulations, not every obligation.
 - Thresholds for R02 (dormancy) and R06 (FIT transfer deadline) are configurable firm-policy defaults, not statutory periods; the Regulations do not prescribe these exact intervals.
 - This tool supports but never replaces the Trust Account Supervisor. The TAS remains solely responsible for the Reg 17 certification.
 
@@ -130,7 +130,7 @@ pytest
 
 ```
 trust_domain/
-  rules/          # Eleven compliance rule modules (r01–r12, no r11)
+  rules/          # Twelve compliance rule modules (r01–r13, no r11)
   config/         # Firm TOML configuration + schema
   ingestion/      # CSV loader and column-map normaliser
   reports/        # Markdown / PDF / evidence-pack writers

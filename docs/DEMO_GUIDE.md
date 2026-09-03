@@ -8,114 +8,139 @@ Run it before using the engine on real client data.
 ## 1. Why the Demo Exists
 
 The engine ships with synthetic NZ trust ledger data containing deliberately
-seeded errors covering every rule class in the R01-R07 subset exercised by
-`tests/test_trust_rules.py` (9 violations total — R01 alone now catches 3:
-ERR-2, ERR-14a, and ERR-15). This lets you verify the engine catches known
-breaches before running it against real client data.
+seeded errors covering every one of the 12 shipped rules (R01–R10, R12, R13),
+plus a clean complement for every rule so false positives are caught. Five of
+the seeded scenarios are modelled on real, named NZLS Disciplinary Tribunal
+decisions (Nguy; "Ms M"; Takena Stirling; Mehal Kejriwal; David Small) —
+pattern only, with demo dollar figures, and each scenario's provenance is
+recorded in the generator's comments.
 
-The synthetic dataset (`trust_domain/synthetic/sample/`) was built to match the
-structure of a real NZ law firm trust account, with realistic matter references,
-ledger entries, bank statement lines, and reconciliation records. The seeded
-errors cover every violation category the engine detects.
+This lets you verify the engine catches known breaches, and does not flag
+clean records, before running it against real client data.
 
 ---
 
-## 2. Running the Demo
+## 2. One dataset, one generator
 
-**Option A — Full pipeline run (produces all output files):**
+There is a single canonical generator, `trust_domain/synthetic/generator.py`.
+It writes the same six CSVs to two places:
 
-The test suite uses the synthetic sample data and asserts all 9 violations are found:
+| Directory | Who regenerates it | Purpose |
+|---|---|---|
+| `trust_domain/synthetic/sample/` | The test suite, automatically, on every run | Rule-testing fixture |
+| `data/sample/` | You, manually (`python -m trust_domain.synthetic.generator --output-dir data/sample`) | Input for the CLI via `trust_domain/config/coastal_law.toml` |
+
+The two directories are byte-identical when both are current. If they ever
+differ, `data/sample/` is the stale one — regenerate it. (Earlier versions of
+this guide described a schema difference between the two directories that
+produced different violation counts; that split no longer exists.)
+
+`data/generate_sample.py` is a vestigial Phase 1 script kept alive only by
+its own isolated test. Do not use it for demos.
+
+---
+
+## 3. Running the Demo
+
+**Option A — CLI, reproducible:**
+
+```
+python run.py --config trust_domain/config/coastal_law.toml --as-at 2026-06-25
+```
+
+Expected:
+
+```
+Run complete - 23 violations found (14 CRITICAL, 9 HIGH)
+```
+
+`--as-at` is the report date. The four ageing rules (R02, R04, R05, R06)
+measure how old an item is *as at that date*. With `--as-at 2026-06-25` the
+result is fully deterministic. Without it the engine uses today's date, so the
+ageing findings grow as the calendar moves on — from 2026-06-29 the orphan
+bulk credit B048 (dated 2026-06-24) also trips R04's 5-day threshold and the
+count becomes 24. That is correct behaviour for a real monthly run (a report
+dated today should age items to today); it is just not what you want for a
+demo.
+
+**Option B — Full pipeline via the test suite:**
 
 ```
 python -m pytest tests/test_end_to_end.py -v
 ```
 
-This runs the full pipeline (`run.py`) against `trust_domain/synthetic/sample/`
-and verifies all expected output files are produced.
+Runs `run_pipeline()` against `trust_domain/synthetic/sample/` with a fixed
+`generated_at` of 2026-06-25, asserts exactly 23 violations, and asserts the
+count does not change when the wall clock is faked to 2031.
 
-**Option B — Rule-by-rule verification:**
+**Option C — Rule-by-rule verification:**
 
 ```
-python -m pytest tests/test_trust_rules.py -v
+python -m pytest tests/test_trust_rules.py tests/test_rules_r08_r12.py -v
 ```
 
-This runs each rule individually against the synthetic data and confirms:
-- exactly 9 violations are detected (one per seeded error, except R01 which
-  catches 3: ERR-2, ERR-14a, ERR-15)
-- no false positives on clean records
-
-**Note on `python run.py --config trust_domain/config/coastal_law.toml`:**
-
-Running the CLI directly against `coastal_law.toml` produces results from
-`data/sample/` — see Section 4 for why this shows 10 violations rather than 9.
+Runs each rule individually against the synthetic data with a fixed reference
+date and confirms the exact set of `(rule_id, record_id)` pairs — no more, no
+fewer.
 
 ---
 
-## 3. The Seeded Errors (R01-R07 Subset)
+## 4. The Seeded Errors
 
-All 9 errors below are present in `trust_domain/synthetic/sample/` and are
-caught by the R01-R07 rules exercised by `tests/test_trust_rules.py`. No clean
-record triggers a false positive. (Two further seeded errors, ERR-16 and the
-non-detection ERR-14b, exercise R13 and are outside this 7-rule subset — see
-`trust_domain/synthetic/generator.py` for the full list including ERR-8
-through ERR-13.)
+All records below are present in the synthetic sample. The "Expected finding"
+day-counts are as at the 2026-06-25 reference date.
 
 | Error | Rule ID | What it tests | Record | Expected finding |
 |---|---|---|---|---|
-| ERR-1 | R05_UNRECONCILED_AGEING | Ledger entry unreconciled for more than 30 days | L009 (matter M008) | Entry dated 2026-03-28 unreconciled; open 89 days (threshold 30) |
-| ERR-2 | R01_OVERDRAWN_CLIENT_LEDGER | Client matter running balance goes negative | L021 (matter M016) | Balance -$2,500.00 NZD after payment on 2026-04-28 — client funds in deficit |
-| ERR-3 | R02_DORMANT_BALANCE | Matter holds funds with no activity beyond threshold | M017 (Rowe Estate) | Balance $8,500.00 NZD; last activity 2024-12-15; dormant 557 days (threshold 365) |
-| ERR-4 | R03_RECON_BREAK | Completed monthly reconciliation where ledger total does not equal bank balance | R002 (April 2026) | Bank exceeds ledger by $250.00 NZD — trust interest not posted to any client matter |
-| ERR-5 | R04_UNMATCHED_BANK_LINE | Bank statement line with no matching ledger entry beyond posting window | B031 (2026-05-22) | $15,000 unidentified credit; no matched ledger entry; open 34 days (threshold 5) |
-| ERR-6 | R06_FIT_OVERHELD | Firm Interest in Trust balance held beyond transfer deadline | M021 (FIT account) | $125.00 FIT balance credited 2026-06-01; held 24 days (threshold 14) — transfer overdue |
-| ERR-7 | R07_FEE_WITHOUT_INVOICE | Fee or disbursement entry lacks a valid INV-XXXXX invoice reference | L037 (matter M012) | LINZ title search fee $200.00; reference="" — no INV-XXXXX reference found |
-| ERR-14a | R01_OVERDRAWN_CLIENT_LEDGER | Cross-matter correlation (Nguy pattern): a same-day unexplained credit elsewhere offsets this deficit | L053 (matter M022) | Balance -$1,800.00 NZD after payment on 2026-06-24; correlated with unexplained credit L055/M023 |
-| ERR-15 | R01_OVERDRAWN_CLIENT_LEDGER | Gradual deficit via 4 smaller transfers over consecutive months (Ms M pattern), not one dramatic overdraw | L061 (matter M025) | Balance -$400.00 NZD after the 4th of 4 transfers totaling $6,400 against a $6,000 opening balance |
+| ERR-1 | R05_UNRECONCILED_AGEING | Ledger entry unreconciled beyond threshold | L009 (M008) | Dated 2026-03-28; open 89 days (threshold 30) |
+| ERR-2 | R01_OVERDRAWN_CLIENT_LEDGER | Client matter balance goes negative | L021 (M016) | Balance −$2,500.00 after payment on 2026-04-28 |
+| ERR-3 | R02_DORMANT_BALANCE | Funds held with no activity beyond threshold | M017 | $8,500.00; last activity 2024-12-15; 557 days (threshold 365) |
+| ERR-4 | R03_RECON_BREAK | Ledger total ≠ bank balance in a completed reconciliation | R002 (Apr 2026) | Bank exceeds ledger by $250.00 |
+| ERR-5 | R04_UNMATCHED_BANK_LINE | Bank line with no matching ledger entry beyond posting window | B031 (2026-05-22) | $15,000 unidentified credit; open 34 days (threshold 5) |
+| ERR-6 | R06_FIT_OVERHELD | Interest-bearing-deposit balance held past transfer deadline | M021 | $125.00 credited 2026-06-01; 24 days (threshold 14) |
+| ERR-7 | R07_FEE_WITHOUT_INVOICE | Fee/disbursement with no INV-NNNNN reference | L037 (M012) | $200.00; reference blank |
+| ERR-8 | R08_FEE_INVOICE_MISSING | Fee references an invoice not in the register | L039 (M004) | INV-99999 absent from invoice_register |
+| ERR-9 | R09_FEE_EXCEEDS_INVOICE | Payment exceeds the invoice amount | L040 (M018) | $5,000 > INV-00236 $3,000 |
+| ERR-10 | R10_INVOICE_POSTDATES_PAYMENT | Invoice issued after the payment | L041 (M015) | INV-00237 issued 2026-06-15 > payment 2026-06-01 |
+| ERR-12a | R12_BULK_DEPOSIT_UNALLOCATED | Bulk deposit under-allocated | B046 | Allocations $7,500 < credit $9,000 |
+| ERR-12b | R12_BULK_DEPOSIT_UNALLOCATED | Bulk deposit over-allocated | B047 | Allocations $5,500 > credit $5,000 |
+| ERR-12c | R12_BULK_DEPOSIT_UNALLOCATED | Bulk deposit with no allocations and no match | B048 | $15,000, zero allocation rows (R04 also fires once ≥5 days old) |
+| ERR-13 | R13_BANK_BALANCE_OVERDRAWN | Trust bank running balance goes negative | B050 | Running balance −$14,175.00 |
+| ERR-14a | R01_OVERDRAWN_CLIENT_LEDGER | Cross-matter correlation (Nguy pattern) | L053 (M022) | −$1,800.00; offset by unexplained credit L055/M023 (ERR-14b, not itself a rule hit) |
+| ERR-15 | R01_OVERDRAWN_CLIENT_LEDGER | Gradual deficit via four small transfers (Ms M pattern) | L061 (M025) | −$400.00 after the 4th transfer |
+| ERR-16 | R13_BANK_BALANCE_OVERDRAWN | Gradual deficit, bank side (Ms M pattern) | B055 | Running balance −$575.00 after four debits |
+| ERR-17 | R03_RECON_BREAK | Period falsely certified AGREED with difference stated as $0.00 (Stirling pattern) | R004 (Jun 2026) | Recomputed difference $400.00 — R03 ignores the stored status |
+| ERR-18 | R08_FEE_INVOICE_MISSING | Disbursement authorised by a phantom invoice reference (Kejriwal pattern) | L068 (M027) | INV-88801 absent from invoice_register |
+| ERR-19 | R01_OVERDRAWN_CLIENT_LEDGER | Persistent, worsening overdraw across successive entries (David Small pattern) | L071, L072, L073 (M028) | −$3,000 → −$4,000 → −$4,500; every row flagged while overdrawn |
 
----
-
-## 4. Note on Violation Counts
-
-Running `python run.py --config trust_domain/config/coastal_law.toml` uses
-`data/sample/` as its input directory. That dataset uses a simpler schema
-(no `reference` column in `client_ledger.csv`) and has different values for some
-`matched_ledger_entry` fields. As a result:
-
-- **R04** additionally flags B009 and B022 as spuriously unmatched (in
-  `trust_domain/synthetic/sample/` these are correctly matched to L009 and BANK-INTEREST)
-- **R07** additionally flags L011, L021, and L035 because their descriptions contain
-  "disbursement" but there is no `reference` field to check (in
-  `trust_domain/synthetic/sample/` these descriptions were changed to remove the
-  keyword, and a `reference` column was added)
-
-This produces **10 violations** from `data/sample/` versus **9** from
-`trust_domain/synthetic/sample/`. This difference is expected and does not indicate
-an engine error. The `data/sample/` dataset is a Phase 1 scaffold; the
-`trust_domain/synthetic/sample/` dataset is the definitive rule-testing fixture.
-
-To demo the engine to a prospective client, use the test suite (Option B above),
-which always runs against `trust_domain/synthetic/sample/` and produces the
-deterministic 9-violation result.
+R12 also flags B031 (no allocation, no match), so the per-rule totals are:
+R01 6, R02 1, R03 2, R04 1, R05 1, R06 1, R07 1, R08 2, R09 1, R10 1, R12 4,
+R13 2 = **23**.
 
 ---
 
 ## 5. Verifying Precision and Recall
 
-The integration test confirms no false positives and no missed detections:
-
 ```
-python -m pytest tests/test_trust_rules.py -v -k "integration"
+python -m pytest tests/test_trust_rules.py -v -k "Integration"
 ```
 
-Specifically:
-- `test_exactly_9_violations_total` — asserts the engine finds exactly 9 violations, no more
-- `test_violation_record_ids_match_expected_errors` — asserts the exact
-  `(rule_id, record_id)` pairs match the 9 seeded errors in the table above
+- `test_exactly_13_violations_total` — the R01–R07 subset finds exactly 13
+  violations at the fixed reference date
+- `test_violation_record_ids_match_expected_errors` — the exact
+  `(rule_id, record_id)` pairs match
 
-To run the full test suite and confirm no regressions:
+For the R08–R13 rules, `tests/test_rules_r08_r12.py` and
+`tests/test_trust_rules.py::TestR13BankBalanceOverdrawn` carry the equivalent
+exact-set assertions.
+
+To run the full suite:
 
 ```
 python -m pytest -q
 ```
 
-Historical note: 300 passed, 0 skipped, 0 failed as of Phase 4 (superseded).
+Expected: **531 passed, 0 failed, 0 skipped.** The suite regenerates
+`trust_domain/synthetic/sample/` on every run; with the generator's LF line
+endings and the repository's `.gitattributes`, a test run leaves
+`git status` clean.
