@@ -27,6 +27,7 @@ import trust_domain.rules.r09_fee_exceeds_invoice as _r09
 import trust_domain.rules.r10_invoice_postdates_payment as _r10
 import trust_domain.rules.r12_bulk_deposit_unallocated as _r12
 import trust_domain.rules.r13_bank_balance_overdrawn as _r13
+import trust_domain.rules.r14_reconciliation_timing as _r14
 
 __all__ = ["TrustRuleResult", "RULE_METADATA", "load_trust_rules_from_config"]
 
@@ -129,6 +130,14 @@ RULE_METADATA: dict[str, dict] = {
         "dataset":   "trust_bank_statement",
         "mode":      "evaluate_all",
     },
+    "R14_RECONCILIATION_TIMING": {
+        "rule_id":   "R14_RECONCILIATION_TIMING",
+        "label":     "Reconciliation not certified within statutory deadline",
+        "nzls_ref":  _r14.NZLS_REF,
+        "severity":  _r14.SEVERITY,
+        "dataset":   "reconciliation_summary",
+        "mode":      "evaluate_all",
+    },
 }
 
 # Default callable registry (parameterizable rules use date.today() defaults).
@@ -148,6 +157,7 @@ _TRUST_RULE_REGISTRY: dict[str, RuleProtocol] = {
     "R10_INVOICE_POSTDATES_PAYMENT": _r10.make_invoice_postdates_rule([]),
     "R12_BULK_DEPOSIT_UNALLOCATED":  _r12.make_bulk_deposit_rule([]),
     "R13_BANK_BALANCE_OVERDRAWN":    _r13.bank_balance_overdrawn,
+    "R14_RECONCILIATION_TIMING":   _r14.make_reconciliation_timing_rule(),
 }
 
 

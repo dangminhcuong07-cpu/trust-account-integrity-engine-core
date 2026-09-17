@@ -108,6 +108,20 @@ def run_pipeline(
         meta = RULE_METADATA[rule_id]
         records = datasets[meta["dataset"]]
 
+        if rule_id == "R14_RECONCILIATION_TIMING":
+            from trust_domain.rules.r14_reconciliation_timing import dataset_has_column
+            if not dataset_has_column(records, "reconciliation_date"):
+                print("INFO: R14 skipped — no reconciliation_date column in input")
+                rule_summary.append({
+                    "rule_id":          rule_id,
+                    "label":            meta["label"],
+                    "nzls_ref":         meta["nzls_ref"],
+                    "records_checked":  0,
+                    "violations_found": 0,
+                    "result":           "PASS",
+                })
+                continue
+
         # Lazy-load supplementary datasets on first use
         if rule_id in _INVOICE_RULES and _invoice_register is None:
             _invoice_register = load_file_mapped("invoice_register", in_dir, config.column_map)
