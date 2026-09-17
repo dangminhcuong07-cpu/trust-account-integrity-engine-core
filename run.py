@@ -62,6 +62,7 @@ def run_pipeline(
     output_dir: Path | None = None,
     input_dir: Path | None = None,
     generated_at: datetime.datetime | None = None,
+    demo_watermark: bool = False,
 ) -> dict:
     """
     Execute the full integrity engine pipeline.
@@ -73,6 +74,10 @@ def run_pipeline(
     input_dir     Override the input directory from the config (used in tests).
     generated_at  Override the timestamp (used in tests for determinism).
                   Defaults to datetime.datetime.now() if None.
+    demo_watermark  Passed straight through to generate_pdf_report(). Default
+                     False. app.py sets this from the TRUSTSENTRY_DEMO env var;
+                     the CLI (main()) never sets it, so `python run.py` output
+                     is never watermarked.
 
     Returns a dict with keys: violations, report_dict, pack_dict,
     run_log_data, output_dir, config.
@@ -169,6 +174,7 @@ def run_pipeline(
         report_dict=report_dict,
         output_path=out_dir / "exception_report.pdf",
         generated_at=generated_at,
+        demo_watermark=demo_watermark,
     )
 
     pack_dict = generate_evidence_pack(

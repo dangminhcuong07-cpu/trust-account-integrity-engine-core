@@ -61,7 +61,7 @@ _ACTION_TEXT = (
 )
 
 
-def _make_footer_canvas(firm_name: str, period: str):
+def _make_footer_canvas(firm_name: str, period: str, demo_watermark: bool = False):
     """Return a Canvas subclass that stamps footer + page numbers on every page."""
     footer_line = (
         f"CONFIDENTIAL — Trust Account Exception Report "
@@ -86,9 +86,20 @@ def _make_footer_canvas(firm_name: str, period: str):
             total = len(self._page_states)
             for page_num, state in enumerate(self._page_states, start=1):
                 self.__dict__.update(state)
+                if demo_watermark:
+                    self._stamp_watermark()
                 self._stamp_footer(page_num, total)
                 pdfgen_canvas.Canvas.showPage(self)
             pdfgen_canvas.Canvas.save(self)
+
+        def _stamp_watermark(self) -> None:
+            self.saveState()
+            self.setFont("Helvetica-Bold", 40)
+            self.setFillColor(colors.grey, alpha=0.18)
+            self.translate(_PAGE_WIDTH / 2, _PAGE_HEIGHT / 2)
+            self.rotate(45)
+            self.drawCentredString(0, 0, "DEMO — SYNTHETIC DATA ONLY")
+            self.restoreState()
 
         def _stamp_footer(self, page_num: int, total: int) -> None:
             self.saveState()
@@ -185,6 +196,7 @@ def generate_pdf_report(
     report_dict: dict,
     output_path: Path,
     generated_at: datetime.datetime,
+    demo_watermark: bool = False,
 ) -> Path:
     """
     Generate a PDF exception report from a structured report dict.
@@ -194,6 +206,9 @@ def generate_pdf_report(
     report_dict    The dict returned by build_report_dict() / exception_report.json.
     output_path    Full path where the PDF will be written (parent dirs created).
     generated_at   Injected datetime — never sampled inside this function.
+    demo_watermark  When True, stamp a diagonal "DEMO — SYNTHETIC DATA ONLY"
+                     watermark on every page. Default False (on-premise/local
+                     runs never set this).
 
     Returns
     -------
@@ -211,7 +226,7 @@ def generate_pdf_report(
     date_str   = generated_at.strftime("%d %B %Y")
 
     st = _styles()
-    footer_canvas = _make_footer_canvas(firm_name, period)
+    footer_canvas = _make_footer_canvas(firm_name, period, demo_watermark=demo_watermark)
 
     frame = Frame(
         _MARGIN,

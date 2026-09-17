@@ -27,6 +27,7 @@ from werkzeug.utils import secure_filename
 from run import run_pipeline
 
 app = Flask(__name__)
+app.jinja_env.globals["demo_mode"] = lambda: os.environ.get("TRUSTSENTRY_DEMO") == "true"
 app.secret_key = os.urandom(24)  # session for storing run results path
 
 # Per-session output lives in a temp dir.
@@ -180,6 +181,11 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:28px}
 </style>
 </head>
 <body>
+{% if demo_mode() %}
+<div style="background:#D97706;color:#fff;padding:10px 16px;text-align:center;font-weight:600;position:sticky;top:0;z-index:999">
+  DEMO MODE — Synthetic data only. Do not upload real client data to this instance.
+</div>
+{% endif %}
 <div class="brand">
   <div class="brand-mark">
     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -499,6 +505,11 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:16px;padd
 </style>
 </head>
 <body>
+{% if demo_mode() %}
+<div style="background:#D97706;color:#fff;padding:10px 16px;text-align:center;font-weight:600;position:sticky;top:0;z-index:999">
+  DEMO MODE — Synthetic data only. Do not upload real client data to this instance.
+</div>
+{% endif %}
 
 <nav class="topnav">
   <div class="topnav-brand">
@@ -750,6 +761,7 @@ def run():
             output_dir=output_dir,
             input_dir=input_dir,
             generated_at=generated_at,
+            demo_watermark=os.environ.get("TRUSTSENTRY_DEMO") == "true",
         )
     except Exception as exc:
         shutil.rmtree(work_dir, ignore_errors=True)
