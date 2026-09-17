@@ -145,7 +145,15 @@ def run_pipeline(
                     "nzls_ref":         meta["nzls_ref"],
                     "records_checked":  0,
                     "violations_found": 0,
+                    # "result" stays "PASS" on purpose: audit.log and
+                    # evidence_pack.md read this field, and their output
+                    # format must not change. "status" is the distinct
+                    # not-evaluated signal — only the web UI's
+                    # frontend_adapter.adapt_compliance_checks() reads it,
+                    # to avoid rendering a false green PASS badge for a
+                    # rule that never actually ran.
                     "result":           "PASS",
+                    "status":           "NOT_EVALUATED",
                 })
                 continue
 

@@ -76,14 +76,21 @@ def adapt_compliance_checks(rules_applied: list) -> list:
         rule_id          -> id
         label            -> name
         nzls_ref         -> nzlsReference
-        result           -> status  ("PASS" -> "passed"; "VIOLATIONS FOUND" -> "failed")
+        result + status  -> status  ("PASS" -> "passed"; "VIOLATIONS FOUND"
+                            -> "failed"; status == "NOT_EVALUATED" (e.g. R14
+                            with no reconciliation_date column in the input)
+                            -> "not_evaluated", overriding "result" — a rule
+                            that never ran must never render as a passed check)
         violations_found -> resultCount
         label + nzls_ref -> description  ("{label} — {nzls_ref}")
         records_checked  -> dropped
     """
     result = []
     for r in rules_applied:
-        status = "passed" if r["result"] == "PASS" else "failed"
+        if r.get("status") == "NOT_EVALUATED":
+            status = "not_evaluated"
+        else:
+            status = "passed" if r["result"] == "PASS" else "failed"
         result.append({
             "id":            r["rule_id"],
             "name":          r["label"],
