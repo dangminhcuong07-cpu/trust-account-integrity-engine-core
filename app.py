@@ -63,6 +63,7 @@ def _build_toml(
         "R10_INVOICE_POSTDATES_PAYMENT",
         "R12_BULK_DEPOSIT_UNALLOCATED",
         "R13_BANK_BALANCE_OVERDRAWN",
+        "R14_RECONCILIATION_TIMING",
     ]
     enabled_str = "\n  ".join(f'"{r}",' for r in rules)
     return textwrap.dedent(f"""\
