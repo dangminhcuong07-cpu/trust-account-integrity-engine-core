@@ -62,6 +62,7 @@ def run_pipeline(
     output_dir: Path | None = None,
     input_dir: Path | None = None,
     generated_at: datetime.datetime | None = None,
+    demo_watermark: bool = False,
 ) -> dict:
     """
     Execute the full integrity engine pipeline.
@@ -73,6 +74,10 @@ def run_pipeline(
     input_dir     Override the input directory from the config (used in tests).
     generated_at  Override the timestamp (used in tests for determinism).
                   Defaults to datetime.datetime.now() if None.
+    demo_watermark  Passed straight through to generate_pdf_report(). Default
+                     False. app.py sets this from the TRUSTSENTRY_DEMO env var;
+                     the CLI (main()) never sets it, so `python run.py` output
+                     is never watermarked.
 
     Returns a dict with keys: violations, report_dict, pack_dict,
     run_log_data, output_dir, config.
@@ -102,6 +107,20 @@ def run_pipeline(
     for rule_id in config.enabled_rules:
         meta = RULE_METADATA[rule_id]
         records = datasets[meta["dataset"]]
+
+        if rule_id == "R14_RECONCILIATION_TIMING":
+            from trust_domain.rules.r14_reconciliation_timing import dataset_has_column
+            if not dataset_has_column(records, "reconciliation_date"):
+                print("INFO: R14 skipped — no reconciliation_date column in input")
+                rule_summary.append({
+                    "rule_id":          rule_id,
+                    "label":            f'{meta["label"]} (not evaluated — no reconciliation_date column in input)',
+                    "nzls_ref":         meta["nzls_ref"],
+                    "records_checked":  0,
+                    "violations_found": 0,
+                    "result":           "PASS",
+                })
+                continue
 
         # Lazy-load supplementary datasets on first use
         if rule_id in _INVOICE_RULES and _invoice_register is None:
@@ -169,6 +188,7 @@ def run_pipeline(
         report_dict=report_dict,
         output_path=out_dir / "exception_report.pdf",
         generated_at=generated_at,
+        demo_watermark=demo_watermark,
     )
 
     pack_dict = generate_evidence_pack(

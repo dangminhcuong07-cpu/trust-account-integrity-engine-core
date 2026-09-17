@@ -22,7 +22,7 @@ issue_date after entry_date as a breach, which is stricter than the regulation's
 is later added; until then this rule is a conservative same-day-or-earlier check,
 not a literal transcription of Reg 9(2).
 
-Regulation: LCA (Trust Account) Regulations 2008, Reg 9
+Regulation: Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008
 Severity:   HIGH
 """
 
@@ -33,7 +33,7 @@ from integrity_engine.core.types import Record
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID  = "R10_INVOICE_POSTDATES_PAYMENT"
-NZLS_REF = "LCA (Trust Account) Regulations 2008, Reg 9"
+NZLS_REF = "Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008"
 SEVERITY = "HIGH"
 
 _INVOICE_RE = re.compile(r"^INV-\d{5}$")

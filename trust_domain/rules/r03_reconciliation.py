@@ -21,7 +21,7 @@ Secondary check (when bank_statement records are supplied):
 
 Periods with status=IN PROGRESS (fields blank) are skipped.
 
-Regulation: LCA (Trust Account) Regulations 2008, Reg 17 (with Reg 11)
+Regulation: Regulation 17 (with Reg 11) — Lawyers and Conveyancers Act (Trust Account) Regulations 2008
 Severity:   CRITICAL
 
 Citation verified: 10 Jul 2026 against legislation.govt.nz
@@ -37,7 +37,7 @@ from integrity_engine.core.types import Record
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID   = "R03_RECON_BREAK"
-NZLS_REF  = "LCA (Trust Account) Regulations 2008, Reg 17 (with Reg 11)"
+NZLS_REF  = "Regulation 17 (with Reg 11) — Lawyers and Conveyancers Act (Trust Account) Regulations 2008"
 SEVERITY  = "CRITICAL"
 
 # Absolute tolerance for floating-point comparison of running balances.

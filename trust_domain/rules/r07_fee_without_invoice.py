@@ -8,9 +8,9 @@ Flag any client ledger entry where:
 
 Payment entries without a proper invoice reference indicate a fee or
 disbursement has been drawn from trust without a compliant billing record,
-in breach of LCA (Trust Account) Regulations 2008, Reg 9.
+in breach of Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008.
 
-Regulation: LCA (Trust Account) Regulations 2008, Reg 9
+Regulation: Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008
 Severity:   HIGH
 
 Citation verified: 10 Jul 2026 against legislation.govt.nz
@@ -24,7 +24,7 @@ from integrity_engine.core.types import Record
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID       = "R07_FEE_WITHOUT_INVOICE"
-NZLS_REF      = "LCA (Trust Account) Regulations 2008, Reg 9"
+NZLS_REF      = "Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008"
 SEVERITY      = "HIGH"
 
 _INVOICE_RE   = re.compile(r"^INV-\d{5}$")

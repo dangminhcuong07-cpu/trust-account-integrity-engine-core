@@ -7,9 +7,13 @@ Run it before using the engine on real client data.
 
 ## 1. Why the Demo Exists
 
-The engine ships with synthetic NZ trust ledger data containing deliberately
-seeded errors covering every one of the 12 shipped rules (R01–R10, R12, R13),
-plus a clean complement for every rule so false positives are caught. Five of
+The engine ships 13 rules in total (R01–R10, R12, R13, R14). The synthetic
+NZ trust ledger data contains deliberately seeded errors covering 12 of them
+(R01–R10, R12, R13), plus a clean complement for every rule so false
+positives are caught. R14 (reconciliation timing) is not exercised by this
+sample dataset — it requires a `reconciliation_date` column that the sample
+`reconciliation_summary.csv` does not carry, so R14 is skipped (not run,
+not a pass) when the demo pipeline runs against the sample data. Five of
 the seeded scenarios are modelled on real, named NZLS Disciplinary Tribunal
 decisions (Nguy; "Ms M"; Takena Stirling; Mehal Kejriwal; David Small) —
 pattern only, with demo dollar figures, and each scenario's provenance is

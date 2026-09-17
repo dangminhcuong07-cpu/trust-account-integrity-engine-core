@@ -50,3 +50,6 @@ legal/
 # PyInstaller build artifacts
 build/
 .claude/settings.local.json
+
+# --- Local git worktrees (subagent-driven-development scratch) ---
+.worktrees/

@@ -20,7 +20,7 @@ cannot currently detect because the ledger schema has no field for it. A debit
 properly authorised under 9(1)(b) with no invoice will be a false positive under
 this rule until that field is added.
 
-Regulation: LCA (Trust Account) Regulations 2008, Reg 9
+Regulation: Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008
 Severity:   HIGH
 """
 
@@ -31,7 +31,7 @@ from integrity_engine.core.types import Record
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID  = "R08_FEE_INVOICE_MISSING"
-NZLS_REF = "LCA (Trust Account) Regulations 2008, Reg 9"
+NZLS_REF = "Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008"
 SEVERITY = "HIGH"
 
 _INVOICE_RE = re.compile(r"^INV-\d{5}$")

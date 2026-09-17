@@ -7,7 +7,7 @@ Flag any client ledger entry where:
 
 Ageing threshold is configurable via rule config.
 
-Regulation: LCA (Trust Account) Regulations 2008, Reg 11 / Reg 17
+Regulation: Regulation 11 / 17 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008
 Severity:   HIGH
 
 Citation verified: 10 Jul 2026 against legislation.govt.nz
@@ -22,7 +22,7 @@ from integrity_engine.flagging import StalenessChecker
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID   = "R05_UNRECONCILED_AGEING"
-NZLS_REF  = "LCA (Trust Account) Regulations 2008, Reg 11 / Reg 17"
+NZLS_REF  = "Regulation 11 / 17 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008"
 SEVERITY  = "HIGH"
 
 

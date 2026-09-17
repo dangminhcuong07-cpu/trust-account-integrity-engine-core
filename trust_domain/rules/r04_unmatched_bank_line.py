@@ -9,7 +9,7 @@ Flag any bank statement line where:
 Age is computed from transaction_date to datetime.date.today() unless an
 explicit reference_date is provided (for deterministic testing only).
 
-Regulation: LCA (Trust Account) Regulations 2008, Reg 11
+Regulation: Regulation 11 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008
 Severity:   HIGH
 
 Citation verified: 10 Jul 2026 against legislation.govt.nz
@@ -24,7 +24,7 @@ from integrity_engine.flagging import StalenessChecker
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID   = "R04_UNMATCHED_BANK_LINE"
-NZLS_REF  = "LCA (Trust Account) Regulations 2008, Reg 11"
+NZLS_REF  = "Regulation 11 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008"
 SEVERITY  = "HIGH"
 
 

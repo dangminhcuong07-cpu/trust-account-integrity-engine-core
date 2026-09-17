@@ -65,7 +65,7 @@ _DATE_FIELDS: dict[str, set[str]] = {
     "matter_register": {"opened_date", "closed_date", "last_activity_date"},
     "client_ledger": {"entry_date", "reconciled_date"},
     "trust_bank_statement": {"transaction_date"},
-    "reconciliation_summary": {"period_end_date"},
+    "reconciliation_summary": {"period_end_date", "reconciliation_date"},
     "invoice_register": {"issue_date"},
     "allocations": set(),
 }
