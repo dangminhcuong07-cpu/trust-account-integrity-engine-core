@@ -1,0 +1,67 @@
+{
+  "snapshot_id": "synthetic_nz_firm_01_2025-12",
+  "period_end": "2025-12-31",
+  "ledger_entries": [
+    {
+      "dataset": "client_ledger",
+      "entry_id": "L0601",
+      "matter_ref": "M0601A",
+      "entry_date": "2025-12-09",
+      "description": "Receipt - settlement funds deposited",
+      "receipt_nzd": 1400.0,
+      "payment_nzd": 0.0,
+      "balance_after_nzd": 1400.0,
+      "reconciled": "Y",
+      "reference": ""
+    },
+    {
+      "dataset": "matter_register",
+      "matter_ref": "M0601B",
+      "client_name": "Client H",
+      "matter_type": "PROPERTY_PURCHASE",
+      "opened_date": "2025-09-01",
+      "last_activity_date": "2025-12-15",
+      "current_balance_nzd": 0.0,
+      "status": "OPEN"
+    },
+    {
+      "dataset": "matter_register",
+      "matter_ref": "M0602B",
+      "client_name": "Client I (FIT)",
+      "matter_type": "FIT",
+      "opened_date": "2025-06-01",
+      "last_activity_date": "2025-11-01",
+      "current_balance_nzd": 4200.0,
+      "status": "OPEN"
+    },
+    {
+      "dataset": "trust_bank_statement",
+      "statement_id": "B0601",
+      "transaction_date": "2025-12-11",
+      "description": "Bank credit",
+      "credit_nzd": 1400.0,
+      "debit_nzd": 0.0,
+      "running_balance_nzd": 1400.0,
+      "matched_ledger_entry": "L0601"
+    },
+    {
+      "dataset": "reconciliation_summary",
+      "recon_id": "R0601",
+      "period_end_date": "2025-11-30",
+      "ledger_total_nzd": 500000.0,
+      "bank_balance_nzd": 500000.0,
+      "difference_nzd": 0.0,
+      "status": "AGREED",
+      "reconciliation_date": "2025-12-03",
+      "prepared_by": "J. Anderson",
+      "approved_by": "S. Mitchell"
+    }
+  ],
+  "expected_breaches": [
+    "R06_FIT_OVERHELD"
+  ],
+  "metadata": {
+    "firm_size": "small",
+    "month_index": 6
+  }
+}

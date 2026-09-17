@@ -10,7 +10,12 @@ import datetime
 from pathlib import Path
 
 from trust_domain.config import load_config, validate_config
-from trust_domain.rules import load_trust_rules_from_config, RULE_METADATA
+from trust_domain.rules import (
+    SENSITIVITY_MODES,
+    apply_sensitivity,
+    load_trust_rules_from_config,
+    RULE_METADATA,
+)
 from trust_domain.ingestion.loader import load_file_mapped
 from trust_domain.reports.exception_report import write_report
 from trust_domain.reports.pdf_report import generate_pdf_report
@@ -63,6 +68,7 @@ def run_pipeline(
     input_dir: Path | None = None,
     generated_at: datetime.datetime | None = None,
     demo_watermark: bool = False,
+    sensitivity: str = "standard",
 ) -> dict:
     """
     Execute the full integrity engine pipeline.
@@ -78,14 +84,35 @@ def run_pipeline(
                      False. app.py sets this from the TRUSTSENTRY_DEMO env var;
                      the CLI (main()) never sets it, so `python run.py` output
                      is never watermarked.
+    sensitivity   "broad" | "standard" (default) | "precise". A per-run
+                  detection-width dial, layered on top of the config's own
+                  threshold values via trust_domain.rules.apply_sensitivity
+                  — it is not stored in the TOML config, since it describes
+                  how this run should be read, not a firm policy setting.
+                  "standard" leaves every threshold unchanged (pre-Phase-F
+                  behaviour). Which rules run is never affected — only the
+                  five configurable age/amount thresholds are scaled.
 
     Returns a dict with keys: violations, report_dict, pack_dict,
     run_log_data, output_dir, config.
     """
+    if sensitivity not in SENSITIVITY_MODES:
+        raise ValueError(
+            f"sensitivity must be one of {SENSITIVITY_MODES}, got {sensitivity!r}"
+        )
+
     config = load_config(config_path)
     warnings = validate_config(config)
     for w in warnings:
         print(f"WARNING: {w}")
+
+    scaled_thresholds = apply_sensitivity({
+        "dormancy_threshold_days": config.dormancy_threshold_days,
+        "unreconciled_age_days":   config.unreconciled_age_days,
+        "unmatched_bank_days":     config.unmatched_bank_days,
+        "fit_transfer_days":       config.fit_transfer_days,
+        "bulk_min_nzd":            config.bulk_min_nzd,
+    }, sensitivity)
 
     out_dir = output_dir if output_dir is not None else Path(config.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -130,15 +157,15 @@ def run_pipeline(
 
         spec: dict = {"rule_id": rule_id}
         if rule_id == "R02_DORMANT_BALANCE":
-            spec["dormancy_days"] = config.dormancy_threshold_days
+            spec["dormancy_days"] = scaled_thresholds["dormancy_threshold_days"]
         elif rule_id == "R04_UNMATCHED_BANK_LINE":
-            spec["age_days"] = config.unmatched_bank_days
+            spec["age_days"] = scaled_thresholds["unmatched_bank_days"]
         elif rule_id == "R05_UNRECONCILED_AGEING":
-            spec["age_days"] = config.unreconciled_age_days
+            spec["age_days"] = scaled_thresholds["unreconciled_age_days"]
         elif rule_id == "R06_FIT_OVERHELD":
-            spec["fit_days"] = config.fit_transfer_days
+            spec["fit_days"] = scaled_thresholds["fit_transfer_days"]
         elif rule_id == "R12_BULK_DEPOSIT_UNALLOCATED":
-            spec["bulk_min_nzd"] = config.bulk_min_nzd
+            spec["bulk_min_nzd"] = scaled_thresholds["bulk_min_nzd"]
 
         rule_fn = load_trust_rules_from_config(
             [spec],
@@ -182,6 +209,7 @@ def run_pipeline(
         firm_name=config.firm_name,
         generated_at=generated_at.date(),
         output_path=out_dir / "exception_report.md",
+        sensitivity=sensitivity,
     )
 
     generate_pdf_report(
@@ -244,6 +272,7 @@ def run_pipeline(
         "review_period":        config.review_period,
         "input_files":          input_files,
         "rules_applied":        config.enabled_rules,
+        "sensitivity":          sensitivity,
         "total_records":        total_records,
         "total_violations":     len(violations),
         "violation_record_ids": sorted(v.record_id for v in violations),
@@ -262,7 +291,7 @@ def run_pipeline(
     }
 
 
-def main() -> None:
+def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run the Trust Account Integrity Engine."
     )
@@ -281,6 +310,22 @@ def main() -> None:
             "Use a fixed date (e.g. the period end) for reproducible results."
         ),
     )
+    parser.add_argument(
+        "--sensitivity",
+        choices=SENSITIVITY_MODES,
+        default="standard",
+        help=(
+            "Detection width: 'broad' casts a wide net (lower thresholds, "
+            "more surfaced), 'standard' (default) is the unchanged current "
+            "behaviour, 'precise' surfaces only high-confidence breaches "
+            "(tighter thresholds). Which rules run is never affected."
+        ),
+    )
+    return parser
+
+
+def main() -> None:
+    parser = _build_arg_parser()
     args = parser.parse_args()
 
     if args.as_at:
@@ -294,6 +339,7 @@ def main() -> None:
     result = run_pipeline(
         config_path=Path(args.config),
         generated_at=generated_at,
+        sensitivity=args.sensitivity,
     )
 
     n   = result["run_log_data"]["total_violations"]

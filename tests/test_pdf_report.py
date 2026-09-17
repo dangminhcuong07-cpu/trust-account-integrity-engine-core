@@ -82,6 +82,35 @@ class TestGeneratePdfReport:
         # Firm name appears in uncompressed PDF metadata (Info dictionary)
         assert b"Coastal Law Ltd" in out.read_bytes()
 
+    def test_pdf_generation_does_not_crash_with_sensitivity_key(self, tmp_path):
+        from trust_domain.reports.pdf_report import generate_pdf_report
+        out = tmp_path / "exception_report.pdf"
+        report_dict = {**REPORT_DICT, "sensitivity": "broad"}
+        generate_pdf_report(report_dict, out, GENERATED_AT)
+        assert out.exists()
+
+    def test_cover_block_shows_given_sensitivity(self):
+        from trust_domain.reports.pdf_report import _cover_block_lines
+        lines = _cover_block_lines(
+            firm_name="Coastal Law Ltd", period="May 2026", date_str="25 June 2026",
+            sensitivity="broad", total=2, n_critical=1, n_high=1,
+        )
+        assert any("Sensitivity" in line and "Broad" in line for line in lines)
+
+    def test_cover_block_capitalizes_standard_sensitivity(self):
+        from trust_domain.reports.pdf_report import _cover_block_lines
+        lines = _cover_block_lines(
+            firm_name="Coastal Law Ltd", period="May 2026", date_str="25 June 2026",
+            sensitivity="standard", total=0, n_critical=0, n_high=0,
+        )
+        assert any("Sensitivity" in line and "Standard" in line for line in lines)
+
+    def test_pdf_generation_defaults_sensitivity_when_key_absent(self, tmp_path):
+        from trust_domain.reports.pdf_report import generate_pdf_report
+        out = tmp_path / "exception_report.pdf"
+        generate_pdf_report(REPORT_DICT, out, GENERATED_AT)  # no "sensitivity" key
+        assert out.exists()  # report_dict.get() default path must not crash
+
     def test_same_inputs_produce_same_byte_length(self, tmp_path):
         from trust_domain.reports.pdf_report import generate_pdf_report
         out1 = tmp_path / "run1.pdf"

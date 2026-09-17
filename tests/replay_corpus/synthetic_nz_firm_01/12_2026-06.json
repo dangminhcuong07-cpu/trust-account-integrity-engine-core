@@ -1,0 +1,67 @@
+{
+  "snapshot_id": "synthetic_nz_firm_01_2026-06",
+  "period_end": "2026-06-30",
+  "ledger_entries": [
+    {
+      "dataset": "client_ledger",
+      "entry_id": "L1201",
+      "matter_ref": "M1201A",
+      "entry_date": "2026-06-08",
+      "description": "Receipt - settlement funds deposited",
+      "receipt_nzd": 1600.0,
+      "payment_nzd": 0.0,
+      "balance_after_nzd": 1600.0,
+      "reconciled": "Y",
+      "reference": ""
+    },
+    {
+      "dataset": "matter_register",
+      "matter_ref": "M1201B",
+      "client_name": "Client P",
+      "matter_type": "PROPERTY_PURCHASE",
+      "opened_date": "2026-03-01",
+      "last_activity_date": "2026-06-10",
+      "current_balance_nzd": 0.0,
+      "status": "OPEN"
+    },
+    {
+      "dataset": "trust_bank_statement",
+      "statement_id": "B1201",
+      "transaction_date": "2026-06-10",
+      "description": "Bank credit",
+      "credit_nzd": 1600.0,
+      "debit_nzd": 0.0,
+      "running_balance_nzd": 1600.0,
+      "matched_ledger_entry": "L1201"
+    },
+    {
+      "dataset": "trust_bank_statement",
+      "statement_id": "B1202",
+      "transaction_date": "2026-06-30",
+      "description": "Large disbursement out",
+      "credit_nzd": 0.0,
+      "debit_nzd": 1500.0,
+      "running_balance_nzd": -200.0,
+      "matched_ledger_entry": ""
+    },
+    {
+      "dataset": "reconciliation_summary",
+      "recon_id": "R1201",
+      "period_end_date": "2026-05-31",
+      "ledger_total_nzd": 500000.0,
+      "bank_balance_nzd": 500000.0,
+      "difference_nzd": 0.0,
+      "status": "AGREED",
+      "reconciliation_date": "2026-06-03",
+      "prepared_by": "J. Anderson",
+      "approved_by": "S. Mitchell"
+    }
+  ],
+  "expected_breaches": [
+    "R13_BANK_BALANCE_OVERDRAWN"
+  ],
+  "metadata": {
+    "firm_size": "small",
+    "month_index": 12
+  }
+}

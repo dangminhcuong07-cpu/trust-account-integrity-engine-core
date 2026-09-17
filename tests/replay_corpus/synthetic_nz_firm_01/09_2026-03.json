@@ -1,0 +1,77 @@
+{
+  "snapshot_id": "synthetic_nz_firm_01_2026-03",
+  "period_end": "2026-03-31",
+  "ledger_entries": [
+    {
+      "dataset": "client_ledger",
+      "entry_id": "L0901",
+      "matter_ref": "M0901A",
+      "entry_date": "2026-03-08",
+      "description": "Receipt - settlement funds deposited",
+      "receipt_nzd": 2800.0,
+      "payment_nzd": 0.0,
+      "balance_after_nzd": 2800.0,
+      "reconciled": "Y",
+      "reference": ""
+    },
+    {
+      "dataset": "client_ledger",
+      "entry_id": "L0902",
+      "matter_ref": "M0902A",
+      "entry_date": "2026-03-20",
+      "description": "Fee - conveyancing completion fee",
+      "receipt_nzd": 0.0,
+      "payment_nzd": 800.0,
+      "balance_after_nzd": 2000.0,
+      "reconciled": "Y",
+      "reference": "INV-30001"
+    },
+    {
+      "dataset": "invoice_register",
+      "invoice_id": "INV-30001",
+      "matter_ref": "M0902A",
+      "amount_nzd": 500.0,
+      "issue_date": "2026-03-01",
+      "description": "Conveyancing completion fee"
+    },
+    {
+      "dataset": "matter_register",
+      "matter_ref": "M0901B",
+      "client_name": "Client L",
+      "matter_type": "PROPERTY_PURCHASE",
+      "opened_date": "2025-12-01",
+      "last_activity_date": "2026-03-10",
+      "current_balance_nzd": 0.0,
+      "status": "OPEN"
+    },
+    {
+      "dataset": "trust_bank_statement",
+      "statement_id": "B0901",
+      "transaction_date": "2026-03-10",
+      "description": "Bank credit",
+      "credit_nzd": 2800.0,
+      "debit_nzd": 0.0,
+      "running_balance_nzd": 2800.0,
+      "matched_ledger_entry": "L0901"
+    },
+    {
+      "dataset": "reconciliation_summary",
+      "recon_id": "R0901",
+      "period_end_date": "2026-02-28",
+      "ledger_total_nzd": 500000.0,
+      "bank_balance_nzd": 500000.0,
+      "difference_nzd": 0.0,
+      "status": "AGREED",
+      "reconciliation_date": "2026-03-03",
+      "prepared_by": "J. Anderson",
+      "approved_by": "S. Mitchell"
+    }
+  ],
+  "expected_breaches": [
+    "R09_FEE_EXCEEDS_INVOICE"
+  ],
+  "metadata": {
+    "firm_size": "small",
+    "month_index": 9
+  }
+}

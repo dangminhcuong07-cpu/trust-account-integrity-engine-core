@@ -25,6 +25,7 @@ from flask import Flask, request, render_template_string, send_file, redirect, u
 from werkzeug.utils import secure_filename
 
 from run import run_pipeline
+from trust_domain.rules import SENSITIVITY_MODES
 
 app = Flask(__name__)
 app.jinja_env.globals["demo_mode"] = lambda: os.environ.get("TRUSTSENTRY_DEMO") == "true"
@@ -331,6 +332,16 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:28px}
       </div>
     </div>
 
+    <div class="section">
+      <label for="sensitivity">Detection sensitivity</label>
+      <select id="sensitivity" name="sensitivity">
+        <option value="broad" {% if sensitivity == 'broad' %}selected{% endif %}>Broad — cast a wide net</option>
+        <option value="standard" {% if sensitivity != 'broad' and sensitivity != 'precise' %}selected{% endif %}>Standard — default thresholds</option>
+        <option value="precise" {% if sensitivity == 'precise' %}selected{% endif %}>Precise — high-confidence only</option>
+      </select>
+      <span class="hint">Controls what gets surfaced, not which checks run — all 13 rules always run.</span>
+    </div>
+
     <button type="submit" id="submitBtn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12 2.5l7.5 3v6c0 5-3.2 8.7-7.5 10-4.3-1.3-7.5-5-7.5-10v-6l7.5-3z"/>
@@ -531,7 +542,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:16px;padd
 <div class="page-body">
 <div class="page-meta">
   <h1>{{ summary.firmName }}</h1>
-  <span class="period">Period: {{ summary.period }} &nbsp;·&nbsp; Generated: {{ summary.generatedAt }}</span>
+  <span class="period">Period: {{ summary.period }} &nbsp;·&nbsp; Generated: {{ summary.generatedAt }} &nbsp;·&nbsp; Sensitivity: {{ (summary.sensitivity or 'standard')|capitalize }}</span>
 </div>
 
 <!-- Summary cards -->
@@ -673,7 +684,8 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:16px;padd
 
 @app.route("/")
 def index():
-    return render_template_string(INDEX_HTML, error=None, firm_name="", review_period="", reviewed_by="", as_at="")
+    return render_template_string(INDEX_HTML, error=None, firm_name="", review_period="",
+                                  reviewed_by="", as_at="", sensitivity="standard")
 
 
 @app.route("/run", methods=["POST"])
@@ -684,11 +696,14 @@ def run():
     review_period = request.form.get("review_period", "").strip()
     reviewed_by   = request.form.get("reviewed_by", "Trust Accounting Review").strip()
     as_at_raw     = request.form.get("as_at", "").strip()
+    sensitivity   = request.form.get("sensitivity", "standard").strip()
+    if sensitivity not in SENSITIVITY_MODES:
+        sensitivity = "standard"
 
     if not firm_name or not review_period:
         return render_template_string(INDEX_HTML, error="Firm name and review period are required.",
                                       firm_name=firm_name, review_period=review_period,
-                                      reviewed_by=reviewed_by, as_at=as_at_raw)
+                                      reviewed_by=reviewed_by, as_at=as_at_raw, sensitivity=sensitivity)
 
     # ── 2. Validate required file uploads ──
     required = ["matter_register", "client_ledger", "trust_bank_statement", "reconciliation_summary"]
@@ -698,7 +713,7 @@ def run():
             return render_template_string(INDEX_HTML,
                                           error=f"Missing required file: {name.replace('_', ' ')}.",
                                           firm_name=firm_name, review_period=review_period,
-                                          reviewed_by=reviewed_by, as_at=as_at_raw)
+                                          reviewed_by=reviewed_by, as_at=as_at_raw, sensitivity=sensitivity)
 
     # ── 3. Parse as-at date ──
     generated_at: datetime.datetime | None = None
@@ -710,7 +725,7 @@ def run():
             return render_template_string(INDEX_HTML,
                                           error=f"Report date must be YYYY-MM-DD, got {as_at_raw!r}.",
                                           firm_name=firm_name, review_period=review_period,
-                                          reviewed_by=reviewed_by, as_at=as_at_raw)
+                                          reviewed_by=reviewed_by, as_at=as_at_raw, sensitivity=sensitivity)
 
     # ── 4. Create temp workspace ──
     work_dir = Path(tempfile.mkdtemp(prefix="taie_run_"))
@@ -730,7 +745,7 @@ def run():
             return render_template_string(INDEX_HTML,
                                           error=f"{name}: only .csv and .xlsx files are accepted.",
                                           firm_name=firm_name, review_period=review_period,
-                                          reviewed_by=reviewed_by, as_at=as_at_raw)
+                                          reviewed_by=reviewed_by, as_at=as_at_raw, sensitivity=sensitivity)
         dest = input_dir / f"{name}{ext}"
         f.save(dest)
 
@@ -763,13 +778,14 @@ def run():
             input_dir=input_dir,
             generated_at=generated_at,
             demo_watermark=os.environ.get("TRUSTSENTRY_DEMO") == "true",
+            sensitivity=sensitivity,
         )
     except Exception as exc:
         shutil.rmtree(work_dir, ignore_errors=True)
         return render_template_string(INDEX_HTML,
                                       error=f"Pipeline error: {exc}",
                                       firm_name=firm_name, review_period=review_period,
-                                      reviewed_by=reviewed_by, as_at=as_at_raw)
+                                      reviewed_by=reviewed_by, as_at=as_at_raw, sensitivity=sensitivity)
 
     # ── 8. Store run for download ──
     import uuid

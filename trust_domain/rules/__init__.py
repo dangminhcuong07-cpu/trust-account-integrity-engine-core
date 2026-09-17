@@ -29,7 +29,46 @@ import trust_domain.rules.r12_bulk_deposit_unallocated as _r12
 import trust_domain.rules.r13_bank_balance_overdrawn as _r13
 import trust_domain.rules.r14_reconciliation_timing as _r14
 
-__all__ = ["TrustRuleResult", "RULE_METADATA", "load_trust_rules_from_config"]
+__all__ = [
+    "TrustRuleResult", "RULE_METADATA", "load_trust_rules_from_config",
+    "SENSITIVITY_MODES", "apply_sensitivity",
+]
+
+# Detection-sensitivity dial (Phase F). Scales the engine's five
+# configurable thresholds; never changes which rules run. 'standard' is
+# unchanged from pre-Phase-F behaviour (multiplier 1.0).
+SENSITIVITY_MODES: tuple[str, ...] = ("broad", "standard", "precise")
+
+_SENSITIVITY_MULTIPLIER: dict[str, float] = {
+    "broad": 0.5,      # lower age/amount floors -> catches more, sooner
+    "standard": 1.0,   # current defaults - no behaviour change
+    "precise": 1.5,    # higher age/amount floors -> only long-overdue/high-value items
+}
+
+
+def apply_sensitivity(thresholds: dict, sensitivity: str = "standard") -> dict:
+    """
+    Scale a dict of threshold values (keyed by ClientConfig field name,
+    e.g. "dormancy_threshold_days") by the given sensitivity mode.
+
+    Integer thresholds are scaled and rounded to the nearest int (floored
+    at 1 so a threshold never collapses to "flag everything unconditionally").
+    Float thresholds (bulk_min_nzd) are scaled and rounded to 2dp.
+
+    Raises ValueError if sensitivity is not one of SENSITIVITY_MODES.
+    """
+    if sensitivity not in _SENSITIVITY_MULTIPLIER:
+        raise ValueError(
+            f"sensitivity must be one of {SENSITIVITY_MODES}, got {sensitivity!r}"
+        )
+    multiplier = _SENSITIVITY_MULTIPLIER[sensitivity]
+    scaled: dict = {}
+    for key, value in thresholds.items():
+        if isinstance(value, int):
+            scaled[key] = max(1, round(value * multiplier))
+        else:
+            scaled[key] = round(value * multiplier, 2)
+    return scaled
 
 
 # Per-rule metadata (used when building a config-driven pipeline).
