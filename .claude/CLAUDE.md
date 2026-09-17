@@ -7,7 +7,7 @@ A Python engine that audits NZ law firm trust accounts for compliance with the *
 ## Key commands
 
 ```bash
-# Run the full test suite (545 tests)
+# Run the full test suite (553 tests)
 python -m pytest tests/ -q
 
 # Run the pipeline on the sample data (23 seeded violations)
@@ -38,7 +38,7 @@ trust_domain/
 data/sample/                    Live input data for the coastal_law config
 output/coastal_law/             Pipeline output for the sample run
 integrity_engine/               Generic engine core (rules, types, registry)
-tests/                          545 pytest tests
+tests/                          553 pytest tests
 ```
 
 ## Rules implemented
@@ -66,7 +66,7 @@ tests/                          545 pytest tests
 | `matter_register.csv` | Yes | R02, R06 |
 | `client_ledger.csv` | Yes | R01, R05, R07, R08, R09, R10 |
 | `trust_bank_statement.csv` | Yes | R03, R04, R12, R13 |
-| `reconciliation_summary.csv` | Yes | R03 |
+| `reconciliation_summary.csv` | Yes | R03, R14 |
 | `invoice_register.csv` | Optional | R08, R09, R10 |
 | `allocations.csv` | Optional | R12 |
 

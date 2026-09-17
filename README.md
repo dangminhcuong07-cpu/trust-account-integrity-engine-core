@@ -20,7 +20,7 @@ LLMs are unreliable at multi-step arithmetic over large tables and produce non-d
 
 ## Verification Discipline
 
-Every shipped rule's citation (R01–R10, R12, R13) has been checked by the maintainer against legislation.govt.nz (reprint as at 1 Jul 2022), with the verification date recorded in each rule file's docstring. R02 and R06 were additionally checked against the NZLS Lawyers Trust Accounting Guidelines, June 2024. No citation is currently marked PROVISIONAL. This checking was done by the maintainer, who is not a lawyer; it is not a legal opinion and has not been reviewed by the Law Society or any trust-account reviewer.
+Every shipped rule's citation (R01–R10, R12, R13, R14) has been checked by the maintainer against legislation.govt.nz (reprint as at 1 Jul 2022), with the verification date recorded in each rule file's docstring. R02, R06, and R14 were additionally checked against the NZLS Lawyers Trust Accounting Guidelines, June 2024. No citation is currently marked PROVISIONAL. This checking was done by the maintainer, who is not a lawyer; it is not a legal opinion and has not been reviewed by the Law Society or any trust-account reviewer.
 
 Citation strings used verbatim throughout the codebase:
 
@@ -28,16 +28,17 @@ Citation strings used verbatim throughout the codebase:
 |-----|----------|--------|
 | R01 | `LCA (Trust Account) Regulations 2008, Reg 6 and Reg 12(6)(a)` | Verified |
 | R02 | `LCA (Trust Account) Regulations 2008, Reg 12(7); LTAG June 2024 (guidance)` | Verified |
-| R03 | `LCA (Trust Account) Regulations 2008, Reg 17 (with Reg 11)` | Verified |
-| R04 | `LCA (Trust Account) Regulations 2008, Reg 11` | Verified |
-| R05 | `LCA (Trust Account) Regulations 2008, Reg 11 / Reg 17` | Verified |
+| R03 | `Regulation 17 (with Reg 11) — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified |
+| R04 | `Regulation 11 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified |
+| R05 | `Regulation 11 / 17 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified |
 | R06 | `LCA 2006, s110; LCA (Trust Account) Regulations 2008, Reg 8/Reg 9` | Verified |
-| R07 | `LCA (Trust Account) Regulations 2008, Reg 9` | Verified |
-| R08 | `LCA (Trust Account) Regulations 2008, Reg 9` | Verified 20 Jul 2026 |
+| R07 | `Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified |
+| R08 | `Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified 20 Jul 2026 |
 | R09 | `Internal control check (no direct statutory basis) — Reg 9 governs invoice existence and timing, not amount matching` | Reclassified (internal control, not statutory) |
-| R10 | `LCA (Trust Account) Regulations 2008, Reg 9` | Verified 20 Jul 2026 |
+| R10 | `Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified 20 Jul 2026 |
 | R12 | `LCA (Trust Account) Regulations 2008, Reg 12(1)(b) (client fund segregation) and Reg 11 (traceability)` | Verified 20 Jul 2026 |
-| R13 | `LCA (Trust Account) Regulations 2008, Reg 6` | Verified 26 Jul 2026 |
+| R13 | `Regulation 6 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified 26 Jul 2026 |
+| R14 | `Regulation 14 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified 17 Sep 2026 |
 
 Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 468 tests, 0 skipped.
 

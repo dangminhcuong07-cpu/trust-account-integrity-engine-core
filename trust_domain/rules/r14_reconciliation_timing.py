@@ -23,15 +23,13 @@ If reconciliation_date is present but blank for a given row, that row
 passes (treated the same way R03 treats a not-yet-finalised period: no
 data to judge means no violation).
 
-Regulation: LCA (Trust Account) Regulations 2008, Reg 14
+Regulation: Regulation 14 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008
 Severity:   HIGH
 
 Citation verified: 17 Sep 2026 against the NZLS Lawyers Trust Accounting
 Guidelines (June 2024), section 18.1 ("regulation 14" governs the duty to
-regularly reconcile trust account records) - see
-docs/superpowers/specs/2026-09-17-phase-e-regulatory-accuracy-design.md
-for the full verification trail (also cross-checked against section 18.9
-and the NZLS trust-account-certificates FAQ page).
+regularly reconcile trust account records), cross-checked against section
+18.9 and the NZLS trust-account-certificates FAQ page.
 """
 
 from __future__ import annotations
@@ -42,7 +40,7 @@ from integrity_engine.core.types import Record
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID  = "R14_RECONCILIATION_TIMING"
-NZLS_REF = "LCA (Trust Account) Regulations 2008, Reg 14"
+NZLS_REF = "Regulation 14 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008"
 SEVERITY = "HIGH"
 
 
@@ -102,7 +100,13 @@ def make_reconciliation_timing_rule():
         recon_str  = record.data.get("reconciliation_date", "")
         recon_date = _parse_date(recon_str)
 
-        if period_end is None or recon_date is None:
+        if period_end is None:
+            return TrustRuleResult(
+                rule_id=RULE_ID, passed=True, record_id=record.record_id,
+                evidence=f"period_end_date {period_str!r} could not be parsed - cannot determine deadline",
+                nzls_ref=NZLS_REF, severity=SEVERITY,
+            )
+        if recon_date is None:
             return TrustRuleResult(
                 rule_id=RULE_ID, passed=True, record_id=record.record_id,
                 evidence=f"period {period_str}: no reconciliation_date to check",

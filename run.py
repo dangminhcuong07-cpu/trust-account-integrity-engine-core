@@ -114,7 +114,7 @@ def run_pipeline(
                 print("INFO: R14 skipped — no reconciliation_date column in input")
                 rule_summary.append({
                     "rule_id":          rule_id,
-                    "label":            meta["label"],
+                    "label":            f'{meta["label"]} (not evaluated — no reconciliation_date column in input)',
                     "nzls_ref":         meta["nzls_ref"],
                     "records_checked":  0,
                     "violations_found": 0,

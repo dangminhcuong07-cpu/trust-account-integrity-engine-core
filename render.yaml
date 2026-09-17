@@ -8,6 +8,6 @@ services:
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120 --workers 2
     envVars:
       - key: TRUSTSENTRY_DEMO
-        value: true
+        value: "true"
       - key: FLASK_ENV
         value: production
