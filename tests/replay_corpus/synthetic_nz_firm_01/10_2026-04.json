@@ -1,0 +1,78 @@
+{
+  "snapshot_id": "synthetic_nz_firm_01_2026-04",
+  "period_end": "2026-04-30",
+  "ledger_entries": [
+    {
+      "dataset": "client_ledger",
+      "entry_id": "L1001",
+      "matter_ref": "M1001A",
+      "entry_date": "2026-04-08",
+      "description": "Receipt - settlement funds deposited",
+      "receipt_nzd": 1900.0,
+      "payment_nzd": 0.0,
+      "balance_after_nzd": 1900.0,
+      "reconciled": "Y",
+      "reference": ""
+    },
+    {
+      "dataset": "client_ledger",
+      "entry_id": "L1002",
+      "matter_ref": "M1002A",
+      "entry_date": "2026-04-05",
+      "description": "Fee - urgent matter fee",
+      "receipt_nzd": 0.0,
+      "payment_nzd": 400.0,
+      "balance_after_nzd": 1500.0,
+      "reconciled": "Y",
+      "reference": "INV-40001"
+    },
+    {
+      "dataset": "invoice_register",
+      "invoice_id": "INV-40001",
+      "matter_ref": "M1002A",
+      "amount_nzd": 1000.0,
+      "issue_date": "2026-04-15",
+      "description": "Urgent matter fee"
+    },
+    {
+      "dataset": "matter_register",
+      "matter_ref": "M1001B",
+      "client_name": "Client N",
+      "matter_type": "PROPERTY_PURCHASE",
+      "opened_date": "2026-01-01",
+      "last_activity_date": "2026-04-10",
+      "current_balance_nzd": 0.0,
+      "status": "OPEN"
+    },
+    {
+      "dataset": "trust_bank_statement",
+      "statement_id": "B1001",
+      "transaction_date": "2026-04-10",
+      "description": "Bank credit",
+      "credit_nzd": 1900.0,
+      "debit_nzd": 0.0,
+      "running_balance_nzd": 1900.0,
+      "matched_ledger_entry": "L1001"
+    },
+    {
+      "dataset": "reconciliation_summary",
+      "recon_id": "R1001",
+      "period_end_date": "2025-12-31",
+      "ledger_total_nzd": 620000.0,
+      "bank_balance_nzd": 620000.0,
+      "difference_nzd": 0.0,
+      "status": "AGREED",
+      "reconciliation_date": "2026-01-28",
+      "prepared_by": "J. Anderson",
+      "approved_by": "S. Mitchell"
+    }
+  ],
+  "expected_breaches": [
+    "R10_INVOICE_POSTDATES_PAYMENT",
+    "R14_RECONCILIATION_TIMING"
+  ],
+  "metadata": {
+    "firm_size": "small",
+    "month_index": 10
+  }
+}

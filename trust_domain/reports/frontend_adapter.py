@@ -124,6 +124,7 @@ def adapt_full_report(
             "firmName":        report_dict["firm_name"],
             "period":          report_dict["report_period"],
             "generatedAt":     report_dict["generated_at"],
+            "sensitivity":     report_dict.get("sensitivity", "standard"),
         },
     }
 

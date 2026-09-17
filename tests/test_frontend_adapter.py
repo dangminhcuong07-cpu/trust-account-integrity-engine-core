@@ -309,6 +309,17 @@ class TestAdaptFullReport:
         payload = adapt_full_report(REPORT_DICT, PACK_DICT, tmp_path)
         assert payload["summary"]["generatedAt"] == "2026-06-25"
 
+    def test_summary_sensitivity_forwarded_from_report_dict(self, tmp_path):
+        from trust_domain.reports.frontend_adapter import adapt_full_report
+        report = {**REPORT_DICT, "sensitivity": "broad"}
+        payload = adapt_full_report(report, PACK_DICT, tmp_path)
+        assert payload["summary"]["sensitivity"] == "broad"
+
+    def test_summary_sensitivity_defaults_to_standard(self, tmp_path):
+        from trust_domain.reports.frontend_adapter import adapt_full_report
+        payload = adapt_full_report(REPORT_DICT, PACK_DICT, tmp_path)  # no "sensitivity" key
+        assert payload["summary"]["sensitivity"] == "standard"
+
     def test_writes_frontend_payload_json(self, tmp_path):
         from trust_domain.reports.frontend_adapter import adapt_full_report
         adapt_full_report(REPORT_DICT, PACK_DICT, tmp_path)

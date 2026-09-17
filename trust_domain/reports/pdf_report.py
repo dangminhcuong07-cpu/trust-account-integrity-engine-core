@@ -214,6 +214,31 @@ def _violation_block(v: dict, st: dict) -> list:
     ]
 
 
+def _cover_block_lines(
+    *, firm_name: str, period: str, date_str: str, sensitivity: str,
+    total: int, n_critical: int, n_high: int,
+) -> list[str]:
+    """
+    The cover block's paragraph text, in render order, as reportlab
+    mini-markup strings. Extracted from generate_pdf_report() so the exact
+    content can be unit-tested directly — flowable text lands in a
+    compressed PDF content stream, so grepping the rendered bytes (as
+    TestGeneratePdfReport.test_pdf_contains_firm_name does for the
+    uncompressed /Info metadata) does not work for on-page text; this
+    mirrors TestFooterGeometry's approach of pinning real content via an
+    importable function rather than parsing rendered PDF bytes.
+    """
+    return [
+        f"<b>Firm:</b> {firm_name}",
+        f"<b>Period:</b> {period}",
+        f"<b>Generated:</b> {date_str}",
+        f"<b>Reference date:</b> {date_str}",
+        f"<b>Sensitivity:</b> {sensitivity.capitalize()}",
+        "<i>For internal use — not a substitute for professional audit</i>",
+        f"<b>Total exceptions:</b> {total} ({n_critical} CRITICAL, {n_high} HIGH)",
+    ]
+
+
 def generate_pdf_report(
     report_dict: dict,
     output_path: Path,
@@ -239,13 +264,14 @@ def generate_pdf_report(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    firm_name  = report_dict["firm_name"]
-    period     = report_dict["report_period"]
-    total      = report_dict["total_violations"]
-    n_critical = report_dict["critical_count"]
-    n_high     = report_dict["high_count"]
-    violations = report_dict["violations"]
-    date_str   = generated_at.strftime("%d %B %Y")
+    firm_name   = report_dict["firm_name"]
+    period      = report_dict["report_period"]
+    total       = report_dict["total_violations"]
+    n_critical  = report_dict["critical_count"]
+    n_high      = report_dict["high_count"]
+    sensitivity = report_dict.get("sensitivity", "standard")
+    violations  = report_dict["violations"]
+    date_str    = generated_at.strftime("%d %B %Y")
 
     st = _styles()
     footer_canvas = _make_footer_canvas(firm_name, period, demo_watermark=demo_watermark)
@@ -272,18 +298,11 @@ def generate_pdf_report(
     # Cover block
     story.append(Paragraph("TrustSentry Pre-Inspection Compliance Report", st["title"]))
     story.append(Spacer(1, 4 * mm))
-    story.append(Paragraph(f"<b>Firm:</b> {firm_name}", st["cover"]))
-    story.append(Paragraph(f"<b>Period:</b> {period}", st["cover"]))
-    story.append(Paragraph(f"<b>Generated:</b> {date_str}", st["cover"]))
-    story.append(Paragraph(f"<b>Reference date:</b> {date_str}", st["cover"]))
-    story.append(Paragraph(
-        "<i>For internal use — not a substitute for professional audit</i>",
-        st["cover"],
-    ))
-    story.append(Paragraph(
-        f"<b>Total exceptions:</b> {total} ({n_critical} CRITICAL, {n_high} HIGH)",
-        st["cover"],
-    ))
+    for line in _cover_block_lines(
+        firm_name=firm_name, period=period, date_str=date_str,
+        sensitivity=sensitivity, total=total, n_critical=n_critical, n_high=n_high,
+    ):
+        story.append(Paragraph(line, st["cover"]))
     story.append(Spacer(1, 8 * mm))
 
     if total == 0:

@@ -58,12 +58,18 @@ def build_report_dict(
     report_period: str,
     firm_name: str,
     generated_at: datetime.date,
+    sensitivity: str = "standard",
 ) -> dict:
     """
     Build the machine-readable report dict from a list of violations.
 
     Violations are sorted CRITICAL first, then HIGH, then by rule_id
     alphabetically within each severity level. Ordering is deterministic.
+
+    sensitivity  "broad" | "standard" (default) | "precise" — the detection
+                 width this run was evaluated at (Phase F). Recorded for
+                 display only; does not affect sorting or counts here, since
+                 the caller has already applied it when producing `violations`.
     """
     sorted_violations = sorted(violations, key=_sort_key)
     critical_count = sum(1 for v in violations if v.severity == "CRITICAL")
@@ -91,6 +97,7 @@ def build_report_dict(
         "total_violations": len(violations),
         "critical_count":   critical_count,
         "high_count":       high_count,
+        "sensitivity":      sensitivity,
         "violations":       violations_list,
     }
 
@@ -103,6 +110,7 @@ def build_markdown(report_dict: dict) -> str:
     total       = report_dict["total_violations"]
     n_critical  = report_dict["critical_count"]
     n_high      = report_dict["high_count"]
+    sensitivity = report_dict.get("sensitivity", "standard")
     violations  = report_dict["violations"]
 
     lines: list[str] = []
@@ -110,6 +118,7 @@ def build_markdown(report_dict: dict) -> str:
     lines.append(f"**Firm:** {firm}")
     lines.append(f"**Period:** {period}")
     lines.append(f"**Generated:** {generated}")
+    lines.append(f"**Sensitivity:** {sensitivity.capitalize()}")
     lines.append(f"**Total exceptions:** {total} ({n_critical} CRITICAL, {n_high} HIGH)")
     lines.append("")
     lines.append("---")
@@ -167,6 +176,7 @@ def write_report(
     firm_name: str,
     generated_at: datetime.date,
     output_path: Path,
+    sensitivity: str = "standard",
 ) -> dict:
     """
     Build the report dict, render markdown, write to output_path, return dict.
@@ -174,12 +184,14 @@ def write_report(
     The caller controls the output path. Parent directories are created
     automatically. The returned dict is the machine-readable report.
 
+    sensitivity  See build_report_dict(). Recorded in the report header only.
+
     Raises ValidationError (from integrity_engine.validation.output_validator)
     if any violation is malformed or if the produced dict's figures do not match
     the source violations.
     """
     validate_violations(violations)
-    report_dict = build_report_dict(violations, report_period, firm_name, generated_at)
+    report_dict = build_report_dict(violations, report_period, firm_name, generated_at, sensitivity)
     validate_report(report_dict, violations)
     markdown = build_markdown(report_dict)
     output_path.parent.mkdir(parents=True, exist_ok=True)

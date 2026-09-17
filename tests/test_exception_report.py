@@ -288,3 +288,26 @@ class TestWriteReport:
         write_report(_all_violations(), PERIOD, FIRM, REF_DATE, out)
         content = out.read_bytes()
         content.decode("utf-8")   # must not raise
+
+
+# ── sensitivity header (Phase F) ────────────────────────────────────────────
+
+class TestSensitivityInReport:
+    def test_build_report_dict_defaults_sensitivity_to_standard(self):
+        d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE)
+        assert d["sensitivity"] == "standard"
+
+    def test_build_report_dict_records_given_sensitivity(self):
+        d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE, sensitivity="broad")
+        assert d["sensitivity"] == "broad"
+
+    def test_markdown_header_shows_sensitivity(self):
+        d = build_report_dict(_all_violations(), PERIOD, FIRM, REF_DATE, sensitivity="precise")
+        md = build_markdown(d)
+        assert "Sensitivity" in md
+        assert "Precise" in md
+
+    def test_write_report_forwards_sensitivity(self, tmp_path):
+        out = tmp_path / "report.md"
+        d = write_report(_all_violations(), PERIOD, FIRM, REF_DATE, out, sensitivity="broad")
+        assert d["sensitivity"] == "broad"
