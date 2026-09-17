@@ -29,7 +29,7 @@ app.py                          Flask web UI (upload → results dashboard)
 trust_domain/
   config/
     coastal_law.toml            Sample client config (Coastal Law Ltd)
-  rules/                        12 compliance rules (R01–R13, no R11)
+  rules/                        13 compliance rules (R01–R14, no R11)
   ingestion/                    CSV/XLSX loader + column-map normalisation
   reports/                      exception_report, pdf, evidence_pack, funds_trail
   synthetic/
@@ -57,6 +57,7 @@ tests/                          545 pytest tests
 | R10 | Invoice issue date is after the fee payment date | HIGH |
 | R12 | Bulk bank deposit not fully allocated to client ledger | HIGH |
 | R13 | Trust bank account running balance goes negative | CRITICAL |
+| R14 | Reconciliation not certified within statutory deadline | HIGH |
 
 ## Input datasets
 
@@ -114,6 +115,12 @@ enabled = ["R01_OVERDRAWN_CLIENT_LEDGER", ...]
 
 - **R03 secondary bank-balance check** is implemented (`make_recon_break_rule(bank_statement=...)`) but disabled in `run.py` (`bank_statement=None`) until `trust_domain/synthetic/generator.py` is updated to compute `running_balance_nzd` in chronological date order (currently uses CSV insertion order, causing false positives on B052–B055).
 - **Windows installer** (Phase C) — PyInstaller `.exe` packaging not yet done.
+- **Regulation citations use "Regulation N" / "Reg N" interchangeably** across
+  rules — verified against legislation.govt.nz and the NZLS Lawyers Trust
+  Accounting Guidelines (June 2024). Reg 14 governs the underlying monthly
+  reconciliation duty (R14); Reg 17 governs the Trust Account Supervisor's
+  separate certification-to-Law-Society obligation (referenced in R03/R05).
+  These are related but distinct obligations — do not conflate them.
 
 ## Slash commands available
 

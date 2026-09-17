@@ -12,7 +12,7 @@ per-entry checking is the correct and simpler approach — the same
 approach R01_OVERDRAWN_CLIENT_LEDGER uses for client_ledger.csv's
 balance_after_nzd.
 
-Regulation: LCA (Trust Account) Regulations 2008, Reg 6
+Regulation: Regulation 6 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008
 Severity:   CRITICAL
 
 Citation verified: 26 Jul 2026 against legislation.govt.nz
@@ -23,7 +23,7 @@ from integrity_engine.core.types import Record
 from trust_domain.rules.types import TrustRuleResult
 
 RULE_ID  = "R13_BANK_BALANCE_OVERDRAWN"
-NZLS_REF = "LCA (Trust Account) Regulations 2008, Reg 6"
+NZLS_REF = "Regulation 6 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008"
 SEVERITY = "CRITICAL"
 
 

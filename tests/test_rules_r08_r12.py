@@ -171,7 +171,7 @@ class TestR08FeeInvoiceMissing:
         rule = self._make_rule()
         r = rule(_ledger("L039", "M004", "2026-06-10", 350,
                          description="Fee - legal services", reference="INV-99999"))
-        assert r.nzls_ref == "LCA (Trust Account) Regulations 2008, Reg 9"
+        assert r.nzls_ref == "Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008"
 
     def test_result_has_severity(self):
         rule = self._make_rule()
@@ -354,7 +354,7 @@ class TestR10InvoicePostdatesPayment:
         r = rule(_ledger("L041", "M015", "2026-06-01", 500,
                          description="Disbursement - search fee",
                          reference="INV-00237"))
-        assert r.nzls_ref == "LCA (Trust Account) Regulations 2008, Reg 9"
+        assert r.nzls_ref == "Regulation 9 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008"
         assert r.severity == "HIGH"
 
     def test_catches_err10_from_synthetic_data(self):
