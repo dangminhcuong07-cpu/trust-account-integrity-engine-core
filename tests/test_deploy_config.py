@@ -44,11 +44,21 @@ def test_dockerfile_cmd_is_exec_form():
     assert cmd and cmd[0].startswith("CMD [") and "exec gunicorn" in cmd[0]
 
 
+PRIVATE_EXAMPLES = [
+    # Dockerfile does COPY . . ; these exist in the owner's working folder and are git-ignored.
+    "legal/engagement.docx", "outreach/emails.md", "docs/strategy/plan.md",
+    "docs/trustsentry-lawyer-briefing.md", "docs/superpowers/x.md", ".env", ".env.local",
+    "Velocity/entry.pdf", "CLIENT-Proposal-TrustLedger-Monitoring.md",
+    "FOUNDER-Build-and-Prep-Plan.md", "pitch[to firms]/deck.pptx", "archive of suggestions/a.md",
+    "trust-account-integrity-engine/node_modules/react/index.js", ".worktrees/x/app.py",
+    "venv/Lib/site.py", "build/app.exe", "dist/app.exe", "output/coastal_law/evidence_pack.md",
+    "some-new-private-file.md",
+]
+
+
 def test_dockerignore_keeps_private_paths_out_of_the_image():
-    # Dockerfile does COPY . . ; these are git-ignored for a reason.
-    ignored = (ROOT / ".dockerignore").read_text(encoding="utf-8").splitlines()
-    for path in ("legal/", "outreach/", "docs/strategy/", ".env", ".env.*", "Velocity/"):
-        assert path in ignored, path
+    leaked = [p for p in PRIVATE_EXAMPLES if not _dockerignored(p)]
+    assert not leaked, f"would be copied into the image: {leaked}"
 
 
 def _dockerignored(path: str) -> bool:
@@ -67,8 +77,12 @@ def _dockerignored(path: str) -> bool:
     return ignored
 
 
-def test_files_the_image_tests_read_are_not_dockerignored():
+def test_files_the_image_needs_are_not_dockerignored():
     # .claude was dockerignored while test_docs_match_code read .claude/CLAUDE.md,
     # so `docker run ... pytest` failed in the image but passed locally and in CI.
-    for path in [*DOCS_WITH_RULE_TABLES, "tests/test_deploy_config.py"]:
-        assert not _dockerignored(path), f"{path} is excluded from the image by .dockerignore"
+    needed = [*DOCS_WITH_RULE_TABLES, "app.py", "run.py", "requirements.txt", "Dockerfile",
+              "render.yaml", ".dockerignore", "trust_domain/rules/__init__.py",
+              "trust_domain/config/coastal_law.toml", "integrity_engine/__init__.py",
+              "replay/engine.py", "tests/test_deploy_config.py", "data/sample/client_ledger.csv"]
+    missing = [p for p in needed if _dockerignored(p)]
+    assert not missing, f"excluded from the image by .dockerignore: {missing}"

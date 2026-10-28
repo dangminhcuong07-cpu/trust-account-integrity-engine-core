@@ -1,26 +1,33 @@
-.git
-.github
-.claude
-# ...except the doc tests/test_docs_match_code.py checks inside the image
+# Allowlist. The image gets only what the app and its tests need; everything
+# else in the working folder (private business documents, the nested frontend
+# clone, venvs, build output, worktrees) stays out by default. A denylist that
+# "mirrors .gitignore" drifted: about 25 .gitignore entries never reached it.
+# Adding a new top-level file or folder the app needs? Add a "!" line here;
+# tests/test_deploy_config.py checks the required paths are included.
+*
+!app.py
+!run.py
+!requirements.txt
+!pyproject.toml
+!setup.py
+!Dockerfile
+!render.yaml
+!.dockerignore
+!README.md
+!QUICKSTART.md
+!FEEDBACK.md
+!LICENSE
+!integrity_engine
+!trust_domain
+!replay
+!tests
+!data
+!docs/LESSONS.md
+!docs/DATA_HANDLING_BOUNDARY.md
+!docs/DEMO_GUIDE.md
+!docs/ONBOARDING.md
 !.claude/CLAUDE.md
+# Never ship caches, even inside allowed folders
 **/__pycache__
 **/*.pyc
-.pytest_cache
-venv
-.venv
-output
-build
-dist
-*.spec
-# Private paths (mirror .gitignore): COPY . . would otherwise bake them into the image
-legal/
-outreach/
-docs/strategy/
-docs/trustsentry-*
-Velocity/
-plan to marketise/
-*.pdf
-.env
-.env.*
-*.patch
-.worktrees/
+**/.pytest_cache
