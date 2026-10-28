@@ -202,3 +202,19 @@ class TestCLISensitivityFlag:
                 "--config", "trust_domain/config/coastal_law.toml",
                 "--sensitivity", "extreme",
             ])
+
+
+class TestHalfUpRounding:
+    """Half-way results round up, consistently, instead of to the nearest
+    even number (Python's round()), which moved odd and even settings in
+    different directions by a day."""
+
+    @pytest.mark.parametrize("key,value,mode,expected", [
+        ("dormancy_threshold_days", 365, "broad", 183),   # 182.5; round() gave 182
+        ("unmatched_bank_days", 5, "broad", 3),           # 2.5;   round() gave 2
+        ("unmatched_bank_days", 9, "precise", 14),        # 13.5;  round() gave 14
+        ("unreconciled_age_days", 11, "precise", 17),     # 16.5;  round() gave 16
+        ("fit_transfer_days", 1, "broad", 1),             # 0.5 -> 1, and floor of 1
+    ])
+    def test_half_rounds_up(self, key, value, mode, expected):
+        assert apply_sensitivity({key: value}, mode)[key] == expected
