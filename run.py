@@ -228,6 +228,14 @@ def run_pipeline(
         generated_at=generated_at,
         engine_version=config.engine_version,
         output_dir=out_dir,
+        sensitivity=sensitivity,
+        thresholds={
+            "dormancy_threshold_days": (config.dormancy_threshold_days, scaled_thresholds["dormancy_threshold_days"]),
+            "unreconciled_age_days":   (config.unreconciled_age_days,   scaled_thresholds["unreconciled_age_days"]),
+            "unmatched_bank_days":     (config.unmatched_bank_days,     scaled_thresholds["unmatched_bank_days"]),
+            "fit_transfer_days":       (config.fit_transfer_days,       scaled_thresholds["fit_transfer_days"]),
+            "bulk_min_nzd":            (config.bulk_min_nzd,            scaled_thresholds["bulk_min_nzd"]),
+        },
     )
 
     trail_dict = write_funds_trail(

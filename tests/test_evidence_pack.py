@@ -482,3 +482,44 @@ class TestOutputFiles:
             output_dir=new_dir,
         )
         assert (new_dir / "evidence_pack.md").exists()
+
+
+class TestDetectionSettings:
+    """The pack must state the sensitivity mode and the thresholds actually
+    used, so a PASS under a scaled threshold is not mistaken for a PASS at
+    the firm's configured threshold."""
+
+    def test_pack_records_mode_and_thresholds(self, tmp_path):
+        pack = generate_evidence_pack(
+            violations=[],
+            rule_summary=[],
+            firm_name="Test Firm",
+            review_period="May 2026",
+            reviewed_by="Jane TAS",
+            generated_at=datetime.datetime(2026, 6, 1, 9, 0, 0),
+            engine_version="1.0.0",
+            output_dir=tmp_path,
+            sensitivity="precise",
+            thresholds={"dormancy_threshold_days": (365, 548)},
+        )
+        assert pack["sensitivity"] == "precise"
+        assert pack["thresholds_used"] == {"dormancy_threshold_days": [365, 548]}
+        md = (tmp_path / "evidence_pack.md").read_text(encoding="utf-8")
+        assert "**Sensitivity mode:** precise" in md
+        assert "| dormancy_threshold_days | 365 | 548 |" in md
+        assert "not the configured one" in md
+
+    def test_standard_mode_has_no_scaling_note(self, tmp_path):
+        generate_evidence_pack(
+            violations=[],
+            rule_summary=[],
+            firm_name="Test Firm",
+            review_period="May 2026",
+            reviewed_by="Jane TAS",
+            generated_at=datetime.datetime(2026, 6, 1, 9, 0, 0),
+            engine_version="1.0.0",
+            output_dir=tmp_path,
+        )
+        md = (tmp_path / "evidence_pack.md").read_text(encoding="utf-8")
+        assert "**Sensitivity mode:** standard" in md
+        assert "not the configured one" not in md
