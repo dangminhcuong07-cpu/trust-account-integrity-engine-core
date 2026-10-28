@@ -1,6 +1,6 @@
 # Trust Account Integrity Engine
 
-A Python rules engine that checks NZ law firm trust account ledgers against the *Lawyers and Conveyancers Act (Trust Account) Regulations 2008*. It ingests CSV exports, evaluates twelve deterministic compliance rules, and produces a dated exception report, evidence pack, and per-matter funds-trail report with source evidence.
+A Python rules engine that checks NZ law firm trust account ledgers against the *Lawyers and Conveyancers Act (Trust Account) Regulations 2008*. It ingests CSV exports, evaluates 13 deterministic compliance rules, and produces a dated exception report, evidence pack, and per-matter funds-trail report with source evidence.
 
 **Live demo →** https://trust-account-integrity-engine.vercel.app/
 
@@ -40,7 +40,7 @@ Citation strings used verbatim throughout the codebase:
 | R13 | `Regulation 6 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified 26 Jul 2026 |
 | R14 | `Regulation 14 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified 17 Sep 2026 |
 
-Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 468 tests, 0 skipped.
+Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 609 tests, 0 skipped.
 
 ---
 
@@ -61,6 +61,8 @@ Each rule maps to a numbered regulation or identified guidance. Where the regula
 | R09 | Fee exceeds invoice         | HIGH     | Internal control (no statutory cap) |
 | R10 | Invoice postdates payment   | HIGH     | Verified 20 Jul 2026 |
 | R12 | Bulk deposit unallocated    | CRITICAL | Verified 20 Jul 2026 |
+| R13 | Trust bank balance overdrawn | CRITICAL | Verified 26 Jul 2026 |
+| R14 | Reconciliation timing       | HIGH     | Verified 17 Sep 2026 |
 
 ---
 
@@ -82,8 +84,19 @@ pip install -r requirements.txt
 ### Run
 
 ```bash
-python run.py trust_domain/config/coastal_law.toml
+python run.py --config trust_domain/config/coastal_law.toml --as-at 2026-06-25
 ```
+
+Expected: `Run complete - 23 violations found (14 CRITICAL, 9 HIGH)`.
+
+### Web demo in Docker
+
+```bash
+docker build -t trust-engine .
+docker run --rm -p 8000:8000 trust-engine   # then open http://localhost:8000
+```
+
+The web app runs as a single worker on purpose: finished runs are kept in memory (see `tests/test_deploy_config.py`).
 
 Outputs land in `output/<firm-slug>/`:
 
@@ -97,20 +110,20 @@ Outputs land in `output/<firm-slug>/`:
 
 ## Tests
 
-**Tests: 468 passing, 0 failed** (current — verified by running `pytest` locally).
+**Tests: 609 passing, 0 failed** (current — verified by running `pytest` locally).
 
 ```bash
 pytest
 ```
 
-468 tests, 0 skipped. Coverage spans every rule, the ingestion layer, the report writers, the run-log layer, the evidence pack, and the funds-trail report.
+609 tests, 0 skipped. Coverage spans every rule, the ingestion layer, the report writers, the run-log layer, the evidence pack, and the funds-trail report.
 
 ---
 
 ## Limitations
 
 - Synthetic data only — not yet run against a real firm's production ledger.
-- Twelve rules cover a significant subset of the Regulations, not every obligation.
+- 13 rules cover a significant subset of the Regulations, not every obligation.
 - Thresholds for R02 (dormancy) and R06 (FIT transfer deadline) are configurable firm-policy defaults, not statutory periods; the Regulations do not prescribe these exact intervals.
 - This tool supports but never replaces the Trust Account Supervisor. The TAS remains solely responsible for the Reg 17 certification.
 
@@ -131,14 +144,14 @@ pytest
 
 ```
 trust_domain/
-  rules/          # Twelve compliance rule modules (r01–r13, no r11)
+  rules/          # 13 compliance rule modules (r01–r14, no r11)
   config/         # Firm TOML configuration + schema
   ingestion/      # CSV loader and column-map normaliser
   reports/        # Markdown / PDF / evidence-pack writers
   synthetic/      # Synthetic ledger data generator
 integrity_engine/ # Rule-runner, run log, flagging, stats
 data/sample/      # Synthetic demo ledger (CSV)
-tests/            # 468 pytest tests
+tests/            # 609 pytest tests
 docs/             # Data-handling boundary, onboarding, demo guide
 ```
 
