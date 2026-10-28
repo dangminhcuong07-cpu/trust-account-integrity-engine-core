@@ -29,10 +29,13 @@ from trust_domain.rules import SENSITIVITY_MODES
 
 app = Flask(__name__)
 app.jinja_env.globals["demo_mode"] = lambda: os.environ.get("TRUSTSENTRY_DEMO") == "true"
-app.secret_key = os.urandom(24)  # session for storing run results path
+# Set SECRET_KEY in hosted deployments; the random fallback is fine for a local single-process run.
+app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
 # Per-session output lives in a temp dir.
 # We keep a dict: run_id -> output_dir (in-process; restarts clear history — acceptable for local tool).
+# Because it is in-process, the web app must run as ONE worker (see render.yaml, Dockerfile and
+# tests/test_deploy_config.py): with several workers a results link can land on a worker that never saw the run.
 _RUNS: dict[str, Path] = {}
 
 # ──────────────────────────────────────────────────────────────────────────────
