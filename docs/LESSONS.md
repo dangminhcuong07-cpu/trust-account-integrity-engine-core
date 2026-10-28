@@ -12,6 +12,7 @@ One line per lesson: **what happened → the rule → where it's enforced.** Add
 - **Going to 1 worker without `--threads` made one run block every request** (regression from the fix above) → keep `--threads 4` in both render.yaml and the Dockerfile → `test_deploy_config.py`.
 - **Shell-form `CMD` made `/bin/sh` PID 1**, so `docker stop` / Ctrl+C waited 10s then killed gunicorn → exec-form CMD with `exec gunicorn` → `test_deploy_config.py`.
 - **`COPY . .` would have baked `legal/`, `.env` and outreach docs into the image** → `.dockerignore` must mirror the private entries in `.gitignore`; build from a clean clone → `test_deploy_config.py`.
+- **The image failed 1 test that passed locally and in CI**: `.claude` was dockerignored while `test_docs_match_code` reads `.claude/CLAUDE.md`. Replaying the Dockerfile's steps on a checkout can't catch this → after any Dockerfile or `.dockerignore` change, run `docker run --rm trustsentry python -m pytest -q` on the built image; `!.claude/CLAUDE.md` re-includes the one file → `test_files_the_image_tests_read_are_not_dockerignored`.
 - **Docker Hub rate-limits (429) cloud sessions, and pip can't reach PyPI inside a build there** → verify the Dockerfile on a real machine; a cloud session can only replay its steps in the base image.
 
 ## Claims the product makes

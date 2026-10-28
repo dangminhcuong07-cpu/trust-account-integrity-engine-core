@@ -1,6 +1,8 @@
 .git
 .github
 .claude
+# ...except the doc tests/test_docs_match_code.py checks inside the image
+!.claude/CLAUDE.md
 **/__pycache__
 **/*.pyc
 .pytest_cache
