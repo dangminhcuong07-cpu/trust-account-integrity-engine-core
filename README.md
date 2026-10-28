@@ -40,7 +40,7 @@ Citation strings used verbatim throughout the codebase:
 | R13 | `Regulation 6 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified 26 Jul 2026 |
 | R14 | `Regulation 14 — Lawyers and Conveyancers Act (Trust Account) Regulations 2008` | Verified 17 Sep 2026 |
 
-Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 609 tests, 0 skipped.
+Correct firing is proved by a seeded-breach synthetic corpus: each rule's synthetic dataset contains at least one deliberately seeded violation and a clean complement. 620 tests, 0 skipped.
 
 ---
 
@@ -110,13 +110,13 @@ Outputs land in `output/<firm-slug>/`:
 
 ## Tests
 
-**Tests: 609 passing, 0 failed** (current — verified by running `pytest` locally).
+**Tests: 620 passing, 0 failed** (current — verified by running `pytest` locally).
 
 ```bash
 pytest
 ```
 
-609 tests, 0 skipped. Coverage spans every rule, the ingestion layer, the report writers, the run-log layer, the evidence pack, and the funds-trail report.
+620 tests, 0 skipped. Coverage spans every rule, the ingestion layer, the report writers, the run-log layer, the evidence pack, and the funds-trail report.
 
 ---
 
@@ -151,7 +151,7 @@ trust_domain/
   synthetic/      # Synthetic ledger data generator
 integrity_engine/ # Rule-runner, run log, flagging, stats
 data/sample/      # Synthetic demo ledger (CSV)
-tests/            # 609 pytest tests
+tests/            # 620 pytest tests
 docs/             # Data-handling boundary, onboarding, demo guide
 ```
 
