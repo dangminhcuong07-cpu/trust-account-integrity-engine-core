@@ -98,7 +98,7 @@ The 23 violations are deterministic — the same ledger with the same `--as-at` 
 pytest
 ```
 
-Expected: **531 passed, 0 failed, 0 skipped**.
+Expected: **all tests pass, 0 failed, 0 skipped** (exact count: run pytest).
 
 ---
 

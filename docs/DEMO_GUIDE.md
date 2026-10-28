@@ -144,7 +144,7 @@ To run the full suite:
 python -m pytest -q
 ```
 
-Expected: **531 passed, 0 failed, 0 skipped.** The suite regenerates
+Expected: **all tests pass, 0 failed, 0 skipped** (exact count: run pytest). The suite regenerates
 `trust_domain/synthetic/sample/` on every run; with the generator's LF line
 endings and the repository's `.gitattributes`, a test run leaves
 `git status` clean.

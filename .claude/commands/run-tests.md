@@ -5,7 +5,7 @@ Run the Trust Account Integrity Engine test suite.
 ## What to do
 
 ```bash
-# Full suite (fast — ~1.5 seconds, 545 tests)
+# Full suite (fast, a few seconds; exact count: run pytest)
 python -m pytest tests/ -q
 
 # With details on any failures

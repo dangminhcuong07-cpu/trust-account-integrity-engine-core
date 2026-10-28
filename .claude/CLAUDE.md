@@ -1,5 +1,7 @@
 # TrustSentry — Claude Code Project Brief
 
+> **Read `docs/LESSONS.md` before changing rules, reports, the web app, Docker/Render config or the replay corpus.** It lists past mistakes and the tests that now guard them.
+
 ## What this project is
 
 A Python engine that audits NZ law firm trust accounts for compliance with the **Lawyers and Conveyancers Act (Trust Account) Regulations 2008**. It ingests CSV/XLSX exports from practice-management systems (Actionstep, LEAP, etc.) and produces an exception report, PDF, evidence pack, and funds trail.
@@ -7,7 +9,7 @@ A Python engine that audits NZ law firm trust accounts for compliance with the *
 ## Key commands
 
 ```bash
-# Run the full test suite (553 tests)
+# Run the full test suite (all must pass; run pytest for the exact count)
 python -m pytest tests/ -q
 
 # Run the pipeline on the sample data (23 seeded violations)
@@ -38,7 +40,7 @@ trust_domain/
 data/sample/                    Live input data for the coastal_law config
 output/coastal_law/             Pipeline output for the sample run
 integrity_engine/               Generic engine core (rules, types, registry)
-tests/                          553 pytest tests
+tests/                          pytest suite (600+ tests)
 ```
 
 ## Rules implemented
@@ -46,16 +48,16 @@ tests/                          553 pytest tests
 | ID | Rule | Severity |
 |----|------|----------|
 | R01 | Overdrawn client ledger entry | CRITICAL |
-| R02 | Dormant balance — no activity > threshold | CRITICAL |
+| R02 | Dormant balance — no activity > threshold | HIGH |
 | R03 | Reconciliation break — ledger ≠ bank (+ source fabrication check) | CRITICAL |
-| R04 | Bank line with no matching ledger entry | CRITICAL |
-| R05 | Unreconciled ledger entry > age threshold | CRITICAL |
-| R06 | FIT balance held beyond transfer deadline | CRITICAL |
+| R04 | Bank line with no matching ledger entry | HIGH |
+| R05 | Unreconciled ledger entry > age threshold | HIGH |
+| R06 | FIT balance held beyond transfer deadline | HIGH |
 | R07 | Fee/disbursement entry lacks invoice reference | HIGH |
 | R08 | Fee invoice reference not found in invoice register | HIGH |
 | R09 | Fee payment exceeds authorised invoice amount | HIGH |
 | R10 | Invoice issue date is after the fee payment date | HIGH |
-| R12 | Bulk bank deposit not fully allocated to client ledger | HIGH |
+| R12 | Bulk bank deposit not fully allocated to client ledger | CRITICAL |
 | R13 | Trust bank account running balance goes negative | CRITICAL |
 | R14 | Reconciliation not certified within statutory deadline | HIGH |
 

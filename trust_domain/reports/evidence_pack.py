@@ -99,6 +99,7 @@ def generate_evidence_pack(
         firm_name=firm_name,
         generated_at=generated_at.date(),
         output_path=exception_report_path,
+        sensitivity=sensitivity,
     )
 
     # 2. Write audit log — clear first so each call is idempotent

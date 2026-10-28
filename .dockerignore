@@ -10,3 +10,15 @@ output
 build
 dist
 *.spec
+# Private paths (mirror .gitignore): COPY . . would otherwise bake them into the image
+legal/
+outreach/
+docs/strategy/
+docs/trustsentry-*
+Velocity/
+plan to marketise/
+*.pdf
+.env
+.env.*
+*.patch
+.worktrees/

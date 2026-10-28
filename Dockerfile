@@ -19,4 +19,4 @@ USER app
 
 EXPOSE 8000
 # One worker: finished runs live in an in-process dict (see app.py and tests/test_deploy_config.py).
-CMD gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+CMD ["sh", "-c", "exec gunicorn app:app --bind 0.0.0.0:${PORT} --workers 1 --threads 4 --timeout 120"]

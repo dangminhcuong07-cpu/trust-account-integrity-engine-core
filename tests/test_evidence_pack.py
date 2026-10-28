@@ -523,3 +523,19 @@ class TestDetectionSettings:
         md = (tmp_path / "evidence_pack.md").read_text(encoding="utf-8")
         assert "**Sensitivity mode:** standard" in md
         assert "not the configured one" not in md
+
+
+def test_exception_report_md_carries_the_run_sensitivity(tmp_path):
+    """generate_evidence_pack rewrites exception_report.md; it must keep the
+    run's sensitivity, not fall back to 'Standard'."""
+    from pathlib import Path
+    from run import run_pipeline
+    run_pipeline(
+        config_path=Path("trust_domain/config/coastal_law.toml"),
+        output_dir=tmp_path,
+        sensitivity="precise",
+        generated_at=datetime.datetime(2026, 6, 25, 9, 0),
+    )
+    report = (tmp_path / "exception_report.md").read_text(encoding="utf-8")
+    assert "Sensitivity:** Precise" in report
+    assert "Sensitivity:** Standard" not in report
