@@ -487,6 +487,7 @@ td{padding:12px 20px;font-size:.87rem;border-bottom:1px solid var(--border)}
 tr:last-child td{border-bottom:none}
 .status-pass{color:var(--pass);font-weight:700;display:inline-flex;align-items:center;gap:5px}
 .status-fail{color:var(--crit);font-weight:700;display:inline-flex;align-items:center;gap:5px}
+.status-na{color:var(--muted);font-weight:700;display:inline-flex;align-items:center;gap:5px}
 
 /* Downloads */
 .dl-area{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
@@ -619,9 +620,11 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:16px;padd
         <td>{{ chk.id }}<br><small style="color:var(--muted)">{{ chk.name }}</small></td>
         <td style="font-size:.78rem;color:var(--muted)">{{ chk.nzlsReference }}</td>
         <td style="text-align:center">—</td>
-        <td class="{% if chk.status == 'passed' %}status-pass{% else %}status-fail{% endif %}">
+        <td class="{% if chk.status == 'passed' %}status-pass{% elif chk.status == 'not_evaluated' %}status-na{% else %}status-fail{% endif %}">
           {% if chk.status == 'passed' %}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5 5.5-6"/></svg> PASS
+          {% elif chk.status == 'not_evaluated' %}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5 19L19 5"/></svg> N/A
           {% else %}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg> {{ chk.resultCount }} violation{{ 's' if chk.resultCount != 1 }}
           {% endif %}
