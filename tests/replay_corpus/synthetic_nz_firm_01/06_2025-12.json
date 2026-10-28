@@ -63,5 +63,10 @@
   "metadata": {
     "firm_size": "small",
     "month_index": 6
+  },
+  "expected_records": {
+    "R06_FIT_OVERHELD": [
+      "M0602B"
+    ]
   }
 }

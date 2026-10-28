@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import datetime
 import json
+from pathlib import Path
 
 from replay.engine import (
     LedgerSnapshot,
@@ -224,3 +225,53 @@ class TestGetCurrentRuleSet:
             "R10_INVOICE_POSTDATES_PAYMENT", "R12_BULK_DEPOSIT_UNALLOCATED",
             "R13_BANK_BALANCE_OVERDRAWN", "R14_RECONCILIATION_TIMING",
         }
+
+
+class TestRecordLevelScoring:
+    """Mutation tests: the gate must catch a rule that over-flags inside a
+    month where it is expected to fire (invisible to rule-level scoring)."""
+
+    _CORPUS = Path(__file__).parent / "replay_corpus" / "synthetic_nz_firm_01"
+
+    def test_over_flagging_in_expected_month_is_caught(self, monkeypatch):
+        import replay.engine as engine
+
+        real = engine._fired_records
+
+        def over_flagging(rule_set, grouped, period_end):
+            fired = real(rule_set, grouped, period_end)
+            if "R01_OVERDRAWN_CLIENT_LEDGER" in fired:
+                fired["R01_OVERDRAWN_CLIENT_LEDGER"] = {
+                    r.record_id for r in grouped["client_ledger"]
+                }
+            return fired
+
+        monkeypatch.setattr(engine, "_fired_records", over_flagging)
+        result = run_replay(get_current_rule_set(), ReplayCorpus.load(self._CORPUS))
+
+        assert result.precision == 1.0  # rule-level scoring alone misses it
+        assert result.record_precision < 0.95
+        assert any(m["rule_id"] == "R01_OVERDRAWN_CLIENT_LEDGER" and m["unexpected"]
+                   for m in result.record_mismatches)
+
+    def test_snapshot_without_expected_records_is_rule_level_only(self):
+        snap = LedgerSnapshot(
+            snapshot_id="no_records",
+            period_end=datetime.date(2026, 1, 31),
+            ledger_entries=[],
+            expected_breaches=[],
+        )
+        assert "expected_records" not in snap.to_dict()
+        result = run_replay(get_current_rule_set(), ReplayCorpus([snap]))
+        assert (result.record_precision, result.record_recall) == (1.0, 1.0)
+        assert result.record_mismatches == []
+
+    def test_expected_records_round_trip(self):
+        snap = LedgerSnapshot(
+            snapshot_id="with_records",
+            period_end=datetime.date(2026, 1, 31),
+            ledger_entries=[],
+            expected_breaches=["R01_OVERDRAWN_CLIENT_LEDGER"],
+            expected_records={"R01_OVERDRAWN_CLIENT_LEDGER": ["L0102"]},
+        )
+        assert LedgerSnapshot.from_json(snap.to_json()) == snap

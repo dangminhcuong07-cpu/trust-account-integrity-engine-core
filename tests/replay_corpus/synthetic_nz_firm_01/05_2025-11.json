@@ -66,5 +66,13 @@
   "metadata": {
     "firm_size": "small",
     "month_index": 5
+  },
+  "expected_records": {
+    "R05_UNRECONCILED_AGEING": [
+      "L0502"
+    ],
+    "R14_RECONCILIATION_TIMING": [
+      "R0501"
+    ]
   }
 }

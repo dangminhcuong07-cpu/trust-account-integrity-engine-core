@@ -53,5 +53,10 @@
   "metadata": {
     "firm_size": "small",
     "month_index": 3
+  },
+  "expected_records": {
+    "R03_RECON_BREAK": [
+      "R0301"
+    ]
   }
 }

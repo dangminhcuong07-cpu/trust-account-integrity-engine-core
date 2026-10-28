@@ -80,6 +80,12 @@ class LedgerSnapshot:
     expected_breaches    Rule IDs (e.g. ["R01_OVERDRAWN_CLIENT_LEDGER"]) a
                          correct engine run must flag at least once against
                          this snapshot.
+    expected_records     Optional. {rule_id: [record ids]} — the exact records
+                         each rule must flag. When present, run_replay also
+                         scores record-level precision/recall for this
+                         snapshot, so a rule that flags extra (or wrong)
+                         records in a month where it is expected to fire is
+                         caught. Empty means rule-level scoring only.
     metadata             Anonymised context only — firm size category and
                          relative-amount descriptors. Never real names, and
                          never dollar amounts precise enough to identify a
@@ -90,6 +96,7 @@ class LedgerSnapshot:
     ledger_entries: list[dict]
     expected_breaches: list[str]
     metadata: dict = field(default_factory=dict)
+    expected_records: dict[str, list[str]] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -98,6 +105,8 @@ class LedgerSnapshot:
             "ledger_entries": self.ledger_entries,
             "expected_breaches": list(self.expected_breaches),
             "metadata": dict(self.metadata),
+            **({"expected_records": {k: list(v) for k, v in self.expected_records.items()}}
+               if self.expected_records else {}),
         }
 
     @classmethod
@@ -108,6 +117,7 @@ class LedgerSnapshot:
             ledger_entries=list(data["ledger_entries"]),
             expected_breaches=list(data["expected_breaches"]),
             metadata=dict(data.get("metadata", {})),
+            expected_records={k: list(v) for k, v in data.get("expected_records", {}).items()},
         )
 
     def to_json(self) -> str:
@@ -169,12 +179,21 @@ class ReplayResult:
     per_snapshot      Full breakdown for every snapshot, in corpus order:
                        {"snapshot_id", "expected", "fired", "true_positives",
                        "false_positives", "false_negatives"}.
+    record_precision  Record-level TP / (TP + FP), over snapshots that carry
+                       expected_records only. 1.0 when none do.
+    record_recall     Record-level TP / (TP + FN), same scope.
+    record_mismatches One entry per (snapshot, rule) whose flagged records
+                       differ from expected_records:
+                       {"snapshot_id", "rule_id", "unexpected", "missed"}.
     """
     precision: float
     recall: float
     false_positives: list[dict]
     false_negatives: list[dict]
     per_snapshot: list[dict]
+    record_precision: float = 1.0
+    record_recall: float = 1.0
+    record_mismatches: list[dict] = field(default_factory=list)
 
 
 def _group_entries_by_dataset(entries: list[dict]) -> dict[str, list[Record]]:
@@ -187,17 +206,18 @@ def _group_entries_by_dataset(entries: list[dict]) -> dict[str, list[Record]]:
     return grouped
 
 
-def _fired_rule_ids(rule_set: list[dict], grouped: dict[str, list[Record]],
-                     period_end: datetime.date) -> set[str]:
-    """Run every rule in rule_set against its dataset; return the rule_ids
-    that produced at least one violation. Builds fresh rule callables on
-    every call — no shared/mutable state between snapshots or between
-    separate run_replay() calls."""
+def _fired_records(rule_set: list[dict], grouped: dict[str, list[Record]],
+                   period_end: datetime.date) -> dict[str, set[str]]:
+    """Run every rule in rule_set against its dataset; return
+    {rule_id: ids of the records it flagged} for the rules that produced at
+    least one violation. Builds fresh rule callables on every call — no
+    shared/mutable state between snapshots or between separate run_replay()
+    calls."""
     invoice_register = grouped.get("invoice_register", [])
     allocations = grouped.get("allocations", [])
     client_ledger = grouped.get("client_ledger", [])
 
-    fired: set[str] = set()
+    fired: dict[str, set[str]] = {}
     for spec in rule_set:
         rule_id = spec["rule_id"]
         meta = RULE_METADATA[rule_id]
@@ -217,8 +237,9 @@ def _fired_rule_ids(rule_set: list[dict], grouped: dict[str, list[Record]],
             reference_date=period_end,
         )[0]
 
-        if any(not rule_fn(r).passed for r in records):
-            fired.add(rule_id)
+        flagged = {r.record_id for r in records if not rule_fn(r).passed}
+        if flagged:
+            fired[rule_id] = flagged
 
     return fired
 
@@ -240,11 +261,29 @@ def run_replay(rule_set: list[dict], corpus: ReplayCorpus) -> ReplayResult:
     false_positives: list[dict] = []
     false_negatives: list[dict] = []
     per_snapshot: list[dict] = []
+    rec_tp = rec_fp = rec_fn = 0
+    record_mismatches: list[dict] = []
 
     for snapshot in corpus.snapshots:
         expected = set(snapshot.expected_breaches)
         grouped = _group_entries_by_dataset(snapshot.ledger_entries)
-        fired = _fired_rule_ids(rule_set, grouped, snapshot.period_end)
+        fired_records = _fired_records(rule_set, grouped, snapshot.period_end)
+        fired = set(fired_records)
+
+        if snapshot.expected_records:
+            for rule_id in sorted(fired | set(snapshot.expected_records)):
+                want = set(snapshot.expected_records.get(rule_id, []))
+                got = fired_records.get(rule_id, set())
+                rec_tp += len(got & want)
+                rec_fp += len(got - want)
+                rec_fn += len(want - got)
+                if got != want:
+                    record_mismatches.append({
+                        "snapshot_id": snapshot.snapshot_id,
+                        "rule_id": rule_id,
+                        "unexpected": sorted(got - want),
+                        "missed": sorted(want - got),
+                    })
 
         true_positives = fired & expected
         snap_fp = fired - expected
@@ -285,6 +324,9 @@ def run_replay(rule_set: list[dict], corpus: ReplayCorpus) -> ReplayResult:
         false_positives=false_positives,
         false_negatives=false_negatives,
         per_snapshot=per_snapshot,
+        record_precision=1.0 if rec_tp + rec_fp == 0 else rec_tp / (rec_tp + rec_fp),
+        record_recall=1.0 if rec_tp + rec_fn == 0 else rec_tp / (rec_tp + rec_fn),
+        record_mismatches=record_mismatches,
     )
 
 
