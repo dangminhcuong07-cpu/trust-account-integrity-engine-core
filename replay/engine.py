@@ -117,8 +117,18 @@ class LedgerSnapshot:
             ledger_entries=list(data["ledger_entries"]),
             expected_breaches=list(data["expected_breaches"]),
             metadata=dict(data.get("metadata", {})),
-            expected_records={k: list(v) for k, v in data.get("expected_records", {}).items()},
+            expected_records={k: list(v) for k, v in (data.get("expected_records") or {}).items()},
         )
+
+    def __post_init__(self) -> None:
+        # Record-level scoring treats every flagged record of a rule missing
+        # from expected_records as a false positive, so a partial map would
+        # fail a correct engine. Require it to cover exactly the expected rules.
+        if self.expected_records and set(self.expected_records) != set(self.expected_breaches):
+            raise ValueError(
+                f"{self.snapshot_id}: expected_records rules {sorted(self.expected_records)} "
+                f"must match expected_breaches {sorted(self.expected_breaches)}"
+            )
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=2)

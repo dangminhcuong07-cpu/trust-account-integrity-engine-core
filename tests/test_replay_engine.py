@@ -275,3 +275,22 @@ class TestRecordLevelScoring:
             expected_records={"R01_OVERDRAWN_CLIENT_LEDGER": ["L0102"]},
         )
         assert LedgerSnapshot.from_json(snap.to_json()) == snap
+
+
+class TestExpectedRecordsValidation:
+    def test_null_expected_records_is_rule_level_only(self):
+        snap = LedgerSnapshot.from_dict({
+            "snapshot_id": "null_records", "period_end": "2026-01-31",
+            "ledger_entries": [], "expected_breaches": [], "expected_records": None,
+        })
+        assert snap.expected_records == {}
+
+    def test_partial_expected_records_is_rejected(self):
+        import pytest
+        with pytest.raises(ValueError, match="must match expected_breaches"):
+            LedgerSnapshot(
+                snapshot_id="partial", period_end=datetime.date(2026, 1, 31),
+                ledger_entries=[],
+                expected_breaches=["R05_UNRECONCILED_AGEING", "R14_RECONCILIATION_TIMING"],
+                expected_records={"R05_UNRECONCILED_AGEING": ["L0502"]},
+            )

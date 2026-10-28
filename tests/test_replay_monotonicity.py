@@ -44,6 +44,9 @@ def test_monotonicity_gate_record_level():
     assert all(s.expected_records for s in corpus.snapshots), (
         "every corpus snapshot should list expected_records"
     )
+    # Ratios hide a single extra record once the corpus is large (20/21 = 0.952),
+    # so require an exact match as well.
+    assert result.record_mismatches == [], result.record_mismatches
     assert result.record_precision >= 0.95, (
         f"Record-level precision {result.record_precision:.3f} < 0.95: "
         f"{result.record_mismatches}"
