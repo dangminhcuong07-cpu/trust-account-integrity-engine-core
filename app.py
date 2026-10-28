@@ -29,10 +29,13 @@ from trust_domain.rules import SENSITIVITY_MODES
 
 app = Flask(__name__)
 app.jinja_env.globals["demo_mode"] = lambda: os.environ.get("TRUSTSENTRY_DEMO") == "true"
-app.secret_key = os.urandom(24)  # session for storing run results path
+# Set SECRET_KEY in hosted deployments; the random fallback is fine for a local single-process run.
+app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(24)
 
 # Per-session output lives in a temp dir.
 # We keep a dict: run_id -> output_dir (in-process; restarts clear history — acceptable for local tool).
+# Because it is in-process, the web app must run as ONE worker (see render.yaml, Dockerfile and
+# tests/test_deploy_config.py): with several workers a results link can land on a worker that never saw the run.
 _RUNS: dict[str, Path] = {}
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -339,7 +342,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:28px}
         <option value="standard" {% if sensitivity != 'broad' and sensitivity != 'precise' %}selected{% endif %}>Standard — default thresholds</option>
         <option value="precise" {% if sensitivity == 'precise' %}selected{% endif %}>Precise — high-confidence only</option>
       </select>
-      <span class="hint">Controls what gets surfaced, not which checks run — all 13 rules always run.</span>
+      <span class="hint">Controls what gets surfaced, not which checks run. A check that needs a column your files don't have (e.g. R14 needs a reconciliation date) is shown as not evaluated, never as a pass.</span>
     </div>
 
     <button type="submit" id="submitBtn">
@@ -351,7 +354,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:28px}
     </button>
   </form>
 </div>
-<footer>Runs locally — your data never leaves this machine</footer>
+{% if demo_mode() %}<footer>Demo server — synthetic data only. The product itself runs on your own machine.</footer>{% else %}<footer>Runs locally — your data never leaves this machine</footer>{% endif %}
 
 <script>
 document.querySelectorAll('[data-zone]').forEach(function(zone){
@@ -675,7 +678,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:16px;padd
 {% endif %}
 </div>
 
-<footer>TrustSentry — NZ Law Society compliance</footer>
+<footer>TrustSentry — checks against the Lawyers and Conveyancers Act (Trust Account) Regulations 2008. Not affiliated with or endorsed by the New Zealand Law Society.</footer>
 </body>
 </html>
 """

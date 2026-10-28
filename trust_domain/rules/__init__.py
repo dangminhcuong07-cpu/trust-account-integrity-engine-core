@@ -51,8 +51,11 @@ def apply_sensitivity(thresholds: dict, sensitivity: str = "standard") -> dict:
     Scale a dict of threshold values (keyed by ClientConfig field name,
     e.g. "dormancy_threshold_days") by the given sensitivity mode.
 
-    Integer thresholds are scaled and rounded to the nearest int (floored
-    at 1 so a threshold never collapses to "flag everything unconditionally").
+    Integer thresholds are scaled and rounded half up to the nearest int
+    (365 * 0.5 = 182.5 -> 183; Python's round() would give 182, and 2.5 -> 2,
+    so odd and even settings would round in different directions), then
+    floored at 1 so a threshold never collapses to "flag everything
+    unconditionally".
     Float thresholds (bulk_min_nzd) are scaled and rounded to 2dp.
 
     Raises ValueError if sensitivity is not one of SENSITIVITY_MODES.
@@ -65,7 +68,7 @@ def apply_sensitivity(thresholds: dict, sensitivity: str = "standard") -> dict:
     scaled: dict = {}
     for key, value in thresholds.items():
         if isinstance(value, int):
-            scaled[key] = max(1, round(value * multiplier))
+            scaled[key] = max(1, int(value * multiplier + 0.5))
         else:
             scaled[key] = round(value * multiplier, 2)
     return scaled

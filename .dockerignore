@@ -1,0 +1,12 @@
+.git
+.github
+.claude
+**/__pycache__
+**/*.pyc
+.pytest_cache
+venv
+.venv
+output
+build
+dist
+*.spec

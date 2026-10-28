@@ -58,6 +58,8 @@ def generate_evidence_pack(
     generated_at: datetime.datetime,
     engine_version: str,
     output_dir: Path,
+    sensitivity: str = "standard",
+    thresholds: dict | None = None,
 ) -> dict:
     """
     Generate an evidence pack proving a systematic trust account integrity review
@@ -75,6 +77,11 @@ def generate_evidence_pack(
     generated_at    Injected by the caller — never sampled inside this function.
     engine_version  Version string (e.g. "1.0.0").
     output_dir      Directory where all three artefacts are written.
+    sensitivity     Detection mode the run used ("broad" | "standard" | "precise").
+    thresholds      Optional {name: (configured, effective)} for the scaled
+                    thresholds, so the pack states exactly what was tested.
+                    A "PASS" under a scaled threshold is only as wide as that
+                    threshold, so the pack must say which one was used.
 
     Returns
     -------
@@ -143,6 +150,8 @@ def generate_evidence_pack(
         "exception_report_path": str(exception_report_path),
         "audit_log_path":        str(audit_log_path),
         "conclusion":            conclusion,
+        "sensitivity":           sensitivity,
+        "thresholds_used":       {k: list(v) for k, v in (thresholds or {}).items()},
     }
 
     # 4. Write evidence pack markdown
@@ -178,6 +187,23 @@ def _build_markdown(pack: dict, audit_log_path: Path) -> str:
     lines.append(
         f"**Total records reviewed across all rules:** {pack['total_records_checked']}"
     )
+    lines.append("")
+    lines.append("---")
+    lines.append("## Detection Settings")
+    lines.append(f"**Sensitivity mode:** {pack['sensitivity']}")
+    if pack["thresholds_used"]:
+        lines.append("")
+        lines.append("| Threshold | Configured | Used in this review |")
+        lines.append("|-----------|------------|---------------------|")
+        for name, (configured, effective) in pack["thresholds_used"].items():
+            lines.append(f"| {name} | {configured} | {effective} |")
+    if pack["sensitivity"] != "standard":
+        lines.append("")
+        lines.append(
+            "Thresholds were scaled from the firm's configured values for this review. "
+            "A rule marked PASS was tested against the threshold used above, not the "
+            "configured one."
+        )
     lines.append("")
     lines.append("---")
     lines.append("## Conclusion")

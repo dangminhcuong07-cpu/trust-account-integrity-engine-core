@@ -65,5 +65,10 @@
   "metadata": {
     "firm_size": "small",
     "month_index": 7
+  },
+  "expected_records": {
+    "R07_FEE_WITHOUT_INVOICE": [
+      "L0702"
+    ]
   }
 }

@@ -65,5 +65,10 @@
   "metadata": {
     "firm_size": "small",
     "month_index": 8
+  },
+  "expected_records": {
+    "R08_FEE_INVOICE_MISSING": [
+      "L0802"
+    ]
   }
 }

@@ -32,3 +32,23 @@ def test_monotonicity_gate():
         f"Monotonicity gate failed: recall {result.recall:.3f} < 0.95. "
         "Rule update regresses on synthetic corpus."
     )
+
+
+def test_monotonicity_gate_record_level():
+    """Rule-level scoring only asks "did the rule fire this month?". A rule
+    that starts flagging extra records in a month where it is expected to
+    fire would still score 1.0 there, so the gate also checks the exact
+    records each rule flags (expected_records in the corpus)."""
+    corpus = ReplayCorpus.load(_CORPUS_PATH)
+    result = run_replay(get_current_rule_set(), corpus)
+    assert all(s.expected_records for s in corpus.snapshots), (
+        "every corpus snapshot should list expected_records"
+    )
+    assert result.record_precision >= 0.95, (
+        f"Record-level precision {result.record_precision:.3f} < 0.95: "
+        f"{result.record_mismatches}"
+    )
+    assert result.record_recall >= 0.95, (
+        f"Record-level recall {result.record_recall:.3f} < 0.95: "
+        f"{result.record_mismatches}"
+    )
